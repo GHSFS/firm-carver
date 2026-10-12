@@ -5,6 +5,7 @@
 use clap::Parser;
 use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
+use firm_carver::fdt::{build_synthetic_fdt, FdtArchive};
 use firm_carver::image::{build_synthetic_firmware, scan_containers, ContainerMetadata};
 use firm_carver::squashfs::{build_synthetic_squashfs, SquashFsArchive};
 use firm_carver::{carve_and_extract, scan_vulnerabilities, VulnSeverity};
@@ -272,9 +273,67 @@ fn run() -> Result<()> {
             data.zeroize();
         }
 
+        Commands::Fdt(args) => {
+            let mut data = fs::read(&args.file).map_err(|e| {
+                CarverError::Io(std::io::Error::new(
+                    e.kind(),
+                    format!("Failed to read {}: {}", args.file.display(), e),
+                ))
+            })?;
+
+            let start_offset = if let Some(off) = args.offset {
+                off
+            } else {
+                let mut found = None;
+                for i in 0..data.len().saturating_sub(4) {
+                    if data[i..i + 4] == [0xD0, 0x0D, 0xFE, 0xED] {
+                        found = Some(i);
+                        break;
+                    }
+                }
+                found.unwrap_or(0)
+            };
+
+            if start_offset >= data.len() {
+                return Err(CarverError::InvalidArgument(format!(
+                    "Offset 0x{:08X} exceeds file size {} bytes",
+                    start_offset,
+                    data.len()
+                )));
+            }
+
+            let archive = FdtArchive::parse(&data[start_offset..])?;
+
+            if args.json {
+                let json_output = serde_json::to_string_pretty(&archive)?;
+                println!("{}", json_output);
+            } else if args.dts {
+                print!("{}", archive.format_dts());
+            } else if args.hardware {
+                print!("{}", archive.format_hardware_summary());
+            } else {
+                println!("=== FirmCarver Device Tree Blob (FDT) Inspector ===");
+                println!("Target Image:     {}", args.file.display());
+                println!("FDT Offset:       0x{:08X}", start_offset);
+                println!("Total Size:       {} bytes", archive.header.totalsize);
+                println!("Version:          v{}", archive.header.version);
+                println!("Struct Offset:    0x{:08X}", archive.header.off_dt_struct);
+                println!("Strings Offset:   0x{:08X}", archive.header.off_dt_strings);
+                println!("Memreserve Offset:0x{:08X}", archive.header.off_mem_rsvmap);
+                println!("Reservations:     {}", archive.mem_rsvmap.len());
+                println!();
+                print!("{}", archive.format_hardware_summary());
+                println!();
+                println!("Hint: Run with --dts for full disassembler output or --json.");
+            }
+            data.zeroize();
+        }
+
         Commands::SynthFw(args) => {
             let synthetic_blob = if args.fw_type == "squashfs" {
                 build_synthetic_squashfs(false)
+            } else if args.fw_type == "fdt" || args.fw_type == "dtb" {
+                build_synthetic_fdt()
             } else {
                 let mut sample_payload = Vec::new();
                 sample_payload.extend_from_slice(b"BOOTLOADER_INIT_ROUTINE");

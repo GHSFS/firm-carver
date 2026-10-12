@@ -5,6 +5,7 @@
 pub mod carve;
 pub mod cli;
 pub mod error;
+pub mod fdt;
 pub mod image;
 pub mod squashfs;
 pub mod vuln_scan;
@@ -13,6 +14,10 @@ pub use carve::{
     carve_and_extract, scan_carvable_streams, CarveManifest, CarvedKind, CarvedSegment,
 };
 pub use error::{CarverError, Result};
+pub use fdt::{
+    build_synthetic_fdt, CpuCore, FdtArchive, FdtHeader, FdtNode, FdtProperty, FdtReserveEntry,
+    FlashPartition, MemoryRange, NetworkInterface, PeripheralMap, UartConsole, FDT_MAGIC,
+};
 pub use image::{
     build_synthetic_firmware, compute_crc32, scan_containers, ContainerKind, ContainerMetadata,
     DiscoveredContainer,

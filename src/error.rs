@@ -19,6 +19,8 @@ pub enum CarverError {
     InvalidArgument(String),
     /// SquashFS parsing or decompression error
     SquashFs(String),
+    /// Flattened Device Tree (FDT/DTB) parsing or disassembly error
+    Fdt(String),
 }
 
 impl fmt::Display for CarverError {
@@ -30,6 +32,7 @@ impl fmt::Display for CarverError {
             Self::ExtractionFailed(msg) => write!(f, "Extraction failed: {}", msg),
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {}", msg),
             Self::SquashFs(msg) => write!(f, "SquashFS error: {}", msg),
+            Self::Fdt(msg) => write!(f, "FDT/DTB error: {}", msg),
         }
     }
 }

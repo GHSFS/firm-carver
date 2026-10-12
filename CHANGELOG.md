@@ -2,6 +2,26 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.3.0] - 2026-10-13
+
+### Added
+- **Flattened Device Tree (FDT / DTB) Disassembler & Peripheral Hardware Mapping (`src/fdt.rs`, `src/fdt/`)**:
+  - Implemented standalone parser for Flattened Device Tree blobs supporting format versions v1 through v17+ with strict bounds checking and buffer overflow guards.
+  - Implemented memory reservation block parser (`/memreserve/`) extracting 64-bit physical address and length entries.
+  - Implemented structure block parser traversing `FDT_BEGIN_NODE`, `FDT_END_NODE`, `FDT_PROP`, `FDT_NOP`, and `FDT_END` tokens with string table lookup and stack-based recursion bounds.
+  - Added intelligent DTS value formatter distinguishing string lists, cell arrays (`<...>`), MAC addresses (`[...]`), empty boolean properties, and raw byte streams.
+  - Added automated peripheral hardware mapping engine (`PeripheralMap`) extracting board model, compatible strings, chosen `bootargs` and `stdout-path`, RAM ranges, UART serial consoles (with active console detection), SPI flash MTD partitions (with offsets, sizes, labels, and read-only flags), Ethernet MAC interfaces (with PHY modes), and CPU cores.
+- **Dedicated CLI Subcommand `fdt` (`src/cli.rs`, `src/main.rs`)**:
+  - `fcarver fdt <file>`: inspects FDT header geometry and displays structured hardware peripheral breakdown.
+  - `fcarver fdt <file> --dts`: disassembles binary DTB into complete, human-readable Device Tree Source (`.dts`) syntax.
+  - `fcarver fdt <file> --hardware`: outputs dedicated peripheral hardware map table.
+  - `fcarver fdt <file> --json`: outputs structured JSON containing header metadata, memory reservations, peripheral map, and full node tree.
+  - `fcarver fdt <file> --offset <bytes>`: supports custom byte offsets or automatic signature scanning within padded firmware containers.
+- **Enhanced Synthetic Generator & Test Suite**:
+  - Added deterministic synthetic DTB builder (`DtBuilder` and `build_synthetic_fdt()`) modeling real-world router architectures with UART, SPI NOR flash partitions, and gigabit Ethernet.
+  - Integrated `fcarver synth-fw --type fdt <output>` with full synthetic DTB generation.
+  - Added dedicated integration test suite (`tests/fdt_test.rs`) with 7 tests covering header parsing, memory reservations, DTS syntax generation, peripheral mapping, hardware summaries, stream offsets, and corrupted input resilience.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added

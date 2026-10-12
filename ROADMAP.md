@@ -6,6 +6,7 @@ This document tracks shipped capabilities and planned firmware forensics, contai
 
 ## Shipped Capabilities
 
+- [x] **Device Tree Blob (FDT) Disassembler & Peripheral Hardware Mapping (`v0.3.0`)** — Standalone Flattened Device Tree parser for v1-v17 DTB containers with bounds-checked header and token parsing; memory reservation map decoder; full recursive node hierarchy parser with smart DTS value formatting (string lists, cell arrays, MAC byte sequences); hardware peripheral extractor mapping board model/compatible, chosen bootargs/stdout-path, RAM ranges, UART serial consoles, SPI flash MTD partitions, Ethernet MAC interfaces, and CPU cores; CLI subcommand `fcarver fdt` with `--dts`, `--hardware`, `--json`, and `--offset`.
 - [x] **SquashFS v4 Directory & Inode Metadata Extractor (`v0.2.0`)** — Standalone parser for SquashFS 4.0 superblock, supporting little-endian and big-endian systems; multi-block `MetadataReader` with Deflate decompression; directory table walking, full file tree recovery, permissions and symlink resolution, and dedicated `squashfs` CLI subcommand (`--list`, `--json`, `--offset`).
 - [x] **Core Firmware Container Parser (U-Boot/TRX/FDT), Magic-Stream Carving Engine & Vulnerability Scanner (`v0.1.0`)** — Zero-dependency U-Boot `uImage` (Magic `0x27051956` big-endian with dual 32-bit CRC calculation), Broadcom `TRX` header (`0x30304448` / `HDR0` with 3 partition offsets), and Flattened Device Tree blobs (`0xD00DFEED` / FDT); multi-format magic-byte stream carver for SquashFS 4.0 (`sqsh`/`hsqs`), CramFS, Gzip, LZMA, and XZ; static firmware vulnerability and backdoor scanner for embedded RSA/EC/OpenSSH/PKCS#8 private keys, `/etc/shadow` root password hashes, unauthenticated `telnetd -l /bin/sh` backdoors, and `nc -e /bin/sh` reverse shells; deterministic synthetic firmware generator (`fcarver synth-fw`, `inspect`, `carve`, `audit`).
 
@@ -15,7 +16,6 @@ This document tracks shipped capabilities and planned firmware forensics, contai
 
 ### Filesystem Metadata & Deep Partition Analysis
 
-- [ ] **Device Tree Blob (FDT) Disassembler & Peripheral Hardware Mapping (`src/fdt.rs`)** — Disassemble Flattened Device Tree blobs into human-readable DTS structure, mapping memory reservations, UART serial consoles, GPIO pin controllers, SPI flash chips, and network MAC peripherals.
 - [ ] **JFFS2 & YAFFS2 NAND/NOR Flash Filesystem Carver (`src/flash_fs.rs`)** — Carve and reconstruct raw Flash Translation Layer (FTL) partitions, assembling JFFS2 raw cleanmarker nodes and YAFFS2 chunk tags into a navigable filesystem tree.
 - [ ] **UBIFS & UBI Volume Header Parser (`src/ubifs.rs`)** — Decode UBI volume identification headers, erase counters, logical eraseblock (LEB) mappings, and master nodes to inspect embedded Linux router NAND storage.
 - [ ] **Ext2/Ext3/Ext4 Raw Disk Image Inode Walker (`src/extfs.rs`)** — Locate and parse standard superblock and block group descriptors in raw firmware images, recovering directory trees, file extent trees, and deleted inode traces.

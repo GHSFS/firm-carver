@@ -89,7 +89,12 @@ cargo build --release
 ./target/release/fcarver squashfs sample_uboot.bin --list
 ./target/release/fcarver squashfs sample_uboot.bin --json
 
-# 6. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 6. Disassemble Device Tree Blob (FDT) into DTS or map hardware peripherals
+./target/release/fcarver fdt sample_uboot.bin --dts
+./target/release/fcarver fdt sample_uboot.bin --hardware
+./target/release/fcarver fdt sample_uboot.bin --json
+
+# 7. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -109,8 +114,9 @@ cargo build --release
 | `inspect` | `<file> [--json]` | Identifies container headers: U-Boot, TRX, FDT, architecture, offsets |
 | `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, Gzip, LZMA partitions to disk |
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
+| `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|squashfs>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs>]` | Generates a valid synthetic firmware blob for testing/analysis |
 
 
 </details>

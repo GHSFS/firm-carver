@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(
     name = "fcarver",
-    version = "0.1.0",
+    version = env!("CARGO_PKG_VERSION"),
     author = "GHSFS",
     about = "Zero-dependency IoT and embedded firmware unpacker, multi-format magic carver, and static vulnerability auditing engine in pure Rust."
 )]
@@ -27,6 +27,8 @@ pub enum Commands {
     Audit(AuditArgs),
     /// Extract directory tree and inode metadata from SquashFS v4 filesystems
     Squashfs(SquashfsArgs),
+    /// Disassemble Flattened Device Tree (FDT/DTB) and map peripheral hardware
+    Fdt(FdtArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -74,6 +76,24 @@ pub struct SquashfsArgs {
     /// List detailed file tree with permissions, sizes, and timestamps
     #[arg(short, long)]
     pub list: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct FdtArgs {
+    /// Path to DTB file or firmware containing embedded FDT
+    pub file: PathBuf,
+    /// Byte offset where FDT begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Disassemble full tree into human-readable DTS (Device Tree Source) syntax
+    #[arg(long)]
+    pub dts: bool,
+    /// Extract and summarize peripheral hardware (UART, Flash, Ethernet, Memory, CPU)
+    #[arg(long)]
+    pub hardware: bool,
+    /// Output results in structured JSON format
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]
