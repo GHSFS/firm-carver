@@ -77,6 +77,10 @@ fn parse_squashfs_at(data: &[u8], offset: usize) -> Option<CarvedSegment> {
         data.len() - offset
     };
 
+    let recovered_entries = crate::squashfs::SquashFsArchive::parse(&data[offset..])
+        .map(|a| a.entries.len())
+        .ok();
+
     Some(CarvedSegment {
         kind: CarvedKind::SquashFs,
         offset,
@@ -96,6 +100,7 @@ fn parse_squashfs_at(data: &[u8], offset: usize) -> Option<CarvedSegment> {
             "creation_time": mkfs_time,
             "block_size": block_size,
             "bytes_used": bytes_used,
+            "recovered_entries": recovered_entries,
         }),
         extracted_filename: None,
     })

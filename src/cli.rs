@@ -25,6 +25,8 @@ pub enum Commands {
     Carve(CarveArgs),
     /// Audit firmware blob for embedded private keys, credentials, and backdoors
     Audit(AuditArgs),
+    /// Extract directory tree and inode metadata from SquashFS v4 filesystems
+    Squashfs(SquashfsArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -60,10 +62,25 @@ pub struct AuditArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct SquashfsArgs {
+    /// Path to firmware binary or extracted SquashFS image
+    pub file: PathBuf,
+    /// Byte offset where SquashFS filesystem begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Output extracted filesystem metadata in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+    /// List detailed file tree with permissions, sizes, and timestamps
+    #[arg(short, long)]
+    pub list: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob
     pub output: PathBuf,
-    /// Container type: uboot, trx, fdt (default: uboot)
+    /// Container type: uboot, trx, fdt, squashfs (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

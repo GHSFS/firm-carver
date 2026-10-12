@@ -6,8 +6,10 @@ use clap::Parser;
 use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
 use firm_carver::image::{build_synthetic_firmware, scan_containers, ContainerMetadata};
+use firm_carver::squashfs::{build_synthetic_squashfs, SquashFsArchive};
 use firm_carver::{carve_and_extract, scan_vulnerabilities, VulnSeverity};
 use std::fs;
+
 use std::process;
 use zeroize::Zeroize;
 
@@ -181,23 +183,113 @@ fn run() -> Result<()> {
             data.zeroize();
         }
 
-        Commands::SynthFw(args) => {
-            // Embed a tiny mock rootfs payload containing a SquashFS superblock signature
-            let mut sample_payload = Vec::new();
-            sample_payload.extend_from_slice(b"BOOTLOADER_INIT_ROUTINE");
-            // Add a synthetic squashfs superblock inside the payload
-            sample_payload.extend_from_slice(&0x73717368u32.to_le_bytes()); // sqsh magic
-            sample_payload.extend_from_slice(&12u32.to_le_bytes()); // 12 inodes
-            sample_payload.extend_from_slice(&1_700_000_000u32.to_le_bytes()); // time
-            sample_payload.extend_from_slice(&4096u32.to_le_bytes()); // 4k block size
-            sample_payload.resize(64, 0); // pad to 64 bytes
-            sample_payload.extend_from_slice(&4u16.to_le_bytes()); // major 4
-            sample_payload.extend_from_slice(&0u16.to_le_bytes()); // minor 0
-            sample_payload.resize(80, 0);
-            sample_payload.extend_from_slice(&128u64.to_le_bytes()); // bytes_used = 128
-            sample_payload.resize(128, 0xAA); // fill payload
+        Commands::Squashfs(args) => {
+            let mut data = fs::read(&args.file).map_err(|e| {
+                CarverError::Io(std::io::Error::new(
+                    e.kind(),
+                    format!("Failed to read {}: {}", args.file.display(), e),
+                ))
+            })?;
 
-            let synthetic_blob = build_synthetic_firmware(&args.fw_type, &sample_payload)?;
+            let start_offset = if let Some(off) = args.offset {
+                off
+            } else {
+                let mut found = None;
+                for i in 0..data.len().saturating_sub(4) {
+                    let slice = &data[i..i + 4];
+                    if slice == [0x73, 0x71, 0x73, 0x68] || slice == [0x68, 0x73, 0x71, 0x73] {
+                        found = Some(i);
+                        break;
+                    }
+                }
+                found.unwrap_or(0)
+            };
+
+            if start_offset >= data.len() {
+                return Err(CarverError::InvalidArgument(format!(
+                    "Offset 0x{:08X} exceeds file size {} bytes",
+                    start_offset,
+                    data.len()
+                )));
+            }
+
+            let archive = SquashFsArchive::parse(&data[start_offset..])?;
+
+            if args.json {
+                let json_output = serde_json::to_string_pretty(&archive)?;
+                println!("{}", json_output);
+            } else if args.list {
+                println!("=== FirmCarver SquashFS v4 File Listing ===");
+                println!(
+                    "Archive Source: {} (offset 0x{:08X})",
+                    args.file.display(),
+                    start_offset
+                );
+                println!("Inodes:         {}", archive.superblock.inode_count);
+                println!(
+                    "Compression:    {}\n",
+                    archive.superblock.compression.name()
+                );
+                println!("Permissions  UID  GID     Size Inode Path");
+                println!("---------------------------------------------------------------");
+                print!("{}", archive.format_listing());
+            } else {
+                println!("=== FirmCarver SquashFS v4 Filesystem Inspector ===");
+                println!("Target Image:     {}", args.file.display());
+                println!("Filesystem Offset:0x{:08X}", start_offset);
+                println!("Endianness:       {:?}", archive.superblock.endianness);
+                println!(
+                    "Version:          v{}.{}",
+                    archive.superblock.version_major, archive.superblock.version_minor
+                );
+                println!(
+                    "Compression:      {}",
+                    archive.superblock.compression.name()
+                );
+                println!("Block Size:       {} bytes", archive.superblock.block_size);
+                println!("Inodes Count:     {}", archive.superblock.inode_count);
+                println!("Bytes Used:       {} bytes", archive.superblock.bytes_used);
+                println!("Recovered Entries:{}", archive.entries.len());
+                println!();
+                println!("Sample Recovered Files & Directories:");
+                for e in archive.entries.iter().take(15) {
+                    let suffix = match &e.symlink_target {
+                        Some(t) => format!(" -> {}", t),
+                        None => String::new(),
+                    };
+                    println!(
+                        "  [{:>9}] {:<28} (size: {:6} B){}",
+                        e.inode_type, e.path, e.file_size, suffix
+                    );
+                }
+                if archive.entries.len() > 15 {
+                    println!(
+                        "  ... and {} more entries. Use --list for full listing or --json.",
+                        archive.entries.len() - 15
+                    );
+                }
+            }
+            data.zeroize();
+        }
+
+        Commands::SynthFw(args) => {
+            let synthetic_blob = if args.fw_type == "squashfs" {
+                build_synthetic_squashfs(false)
+            } else {
+                let mut sample_payload = Vec::new();
+                sample_payload.extend_from_slice(b"BOOTLOADER_INIT_ROUTINE");
+                sample_payload.extend_from_slice(&0x73717368u32.to_le_bytes());
+                sample_payload.extend_from_slice(&12u32.to_le_bytes());
+                sample_payload.extend_from_slice(&1_700_000_000u32.to_le_bytes());
+                sample_payload.extend_from_slice(&4096u32.to_le_bytes());
+                sample_payload.resize(64, 0);
+                sample_payload.extend_from_slice(&4u16.to_le_bytes());
+                sample_payload.extend_from_slice(&0u16.to_le_bytes());
+                sample_payload.resize(80, 0);
+                sample_payload.extend_from_slice(&128u64.to_le_bytes());
+                sample_payload.resize(128, 0xAA);
+                build_synthetic_firmware(&args.fw_type, &sample_payload)?
+            };
 
             fs::write(&args.output, &synthetic_blob).map_err(|e| {
                 CarverError::Io(std::io::Error::new(

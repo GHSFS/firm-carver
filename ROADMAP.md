@@ -6,6 +6,7 @@ This document tracks shipped capabilities and planned firmware forensics, contai
 
 ## Shipped Capabilities
 
+- [x] **SquashFS v4 Directory & Inode Metadata Extractor (`v0.2.0`)** — Standalone parser for SquashFS 4.0 superblock, supporting little-endian and big-endian systems; multi-block `MetadataReader` with Deflate decompression; directory table walking, full file tree recovery, permissions and symlink resolution, and dedicated `squashfs` CLI subcommand (`--list`, `--json`, `--offset`).
 - [x] **Core Firmware Container Parser (U-Boot/TRX/FDT), Magic-Stream Carving Engine & Vulnerability Scanner (`v0.1.0`)** — Zero-dependency U-Boot `uImage` (Magic `0x27051956` big-endian with dual 32-bit CRC calculation), Broadcom `TRX` header (`0x30304448` / `HDR0` with 3 partition offsets), and Flattened Device Tree blobs (`0xD00DFEED` / FDT); multi-format magic-byte stream carver for SquashFS 4.0 (`sqsh`/`hsqs`), CramFS, Gzip, LZMA, and XZ; static firmware vulnerability and backdoor scanner for embedded RSA/EC/OpenSSH/PKCS#8 private keys, `/etc/shadow` root password hashes, unauthenticated `telnetd -l /bin/sh` backdoors, and `nc -e /bin/sh` reverse shells; deterministic synthetic firmware generator (`fcarver synth-fw`, `inspect`, `carve`, `audit`).
 
 ---
@@ -13,7 +14,7 @@ This document tracks shipped capabilities and planned firmware forensics, contai
 ## Planned Milestones
 
 ### Filesystem Metadata & Deep Partition Analysis
-- [ ] **SquashFS v4 Directory & Inode Metadata Extractor (`src/squashfs.rs`)** — Parse SquashFS v4 inode tables, directory entries, uid/gid lookup tables, and fragment tables to extract directory listings, file permissions, and symbolic link targets without mounting.
+
 - [ ] **Device Tree Blob (FDT) Disassembler & Peripheral Hardware Mapping (`src/fdt.rs`)** — Disassemble Flattened Device Tree blobs into human-readable DTS structure, mapping memory reservations, UART serial consoles, GPIO pin controllers, SPI flash chips, and network MAC peripherals.
 - [ ] **JFFS2 & YAFFS2 NAND/NOR Flash Filesystem Carver (`src/flash_fs.rs`)** — Carve and reconstruct raw Flash Translation Layer (FTL) partitions, assembling JFFS2 raw cleanmarker nodes and YAFFS2 chunk tags into a navigable filesystem tree.
 - [ ] **UBIFS & UBI Volume Header Parser (`src/ubifs.rs`)** — Decode UBI volume identification headers, erase counters, logical eraseblock (LEB) mappings, and master nodes to inspect embedded Linux router NAND storage.

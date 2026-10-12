@@ -6,6 +6,7 @@ pub mod carve;
 pub mod cli;
 pub mod error;
 pub mod image;
+pub mod squashfs;
 pub mod vuln_scan;
 
 pub use carve::{
@@ -16,6 +17,7 @@ pub use image::{
     build_synthetic_firmware, compute_crc32, scan_containers, ContainerKind, ContainerMetadata,
     DiscoveredContainer,
 };
+pub use squashfs::{build_synthetic_squashfs, SquashFsArchive, SquashFsEntry, SquashFsSuperblock};
 pub use vuln_scan::{
     scan_vulnerabilities, VulnAuditReport, VulnCategory, VulnFinding, VulnSeverity,
 };

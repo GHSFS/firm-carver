@@ -17,6 +17,8 @@ pub enum CarverError {
     ExtractionFailed(String),
     /// Invalid command-line argument or parameter
     InvalidArgument(String),
+    /// SquashFS parsing or decompression error
+    SquashFs(String),
 }
 
 impl fmt::Display for CarverError {
@@ -27,6 +29,7 @@ impl fmt::Display for CarverError {
             Self::CorruptHeader(msg) => write!(f, "Corrupt header: {}", msg),
             Self::ExtractionFailed(msg) => write!(f, "Extraction failed: {}", msg),
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {}", msg),
+            Self::SquashFs(msg) => write!(f, "SquashFS error: {}", msg),
         }
     }
 }

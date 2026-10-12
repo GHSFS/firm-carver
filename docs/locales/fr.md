@@ -1,7 +1,9 @@
-<p align="center">
-  [🇺🇸 English](../README.md) &nbsp;•&nbsp; [🇰🇷 한국어](./ko.md) &nbsp;•&nbsp; [🇨🇳 中文](./zh-CN.md) &nbsp;•&nbsp; [🇪🇸 Español](./es.md) &nbsp;•&nbsp; [🇮🇳 हिन्दी](./hi.md) &nbsp;•&nbsp; [🇸🇦 العربية](./ar.md) &nbsp;•&nbsp; [🇧🇷 Português (Brasil)](./pt-BR.md) &nbsp;•&nbsp; [🇷🇺 Русский](./ru.md) &nbsp;•&nbsp; **🇫🇷 Français** &nbsp;•&nbsp; [🇮🇩 Bahasa Indonesia](./id.md)
-</p>
+<div align="center">
 
+<p align="center">
+  <a href="../../README.md">🇺🇸 English</a> · <a href="./ko.md">🇰🇷 한국어</a> · <a href="./zh-CN.md">🇨🇳 中文</a> · <a href="./es.md">🇪🇸 Español</a> · <a href="./hi.md">🇮🇳 हिन्दी</a><br />
+  <a href="./ar.md">🇸🇦 العربية</a> · <a href="./pt-BR.md">🇧🇷 Português</a> · <a href="./ru.md">🇷🇺 Русский</a> · <strong>🇫🇷 Français</strong> · <a href="./id.md">🇮🇩 Bahasa Indonesia</a>
+</p>
 
 <p align="center">
   <img src="../assets/locales/fr/banner.svg" alt="FirmCarver (fcarver) banner" width="100%" />
@@ -15,6 +17,10 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange.svg)](./Cargo.toml)
 [![Zero Unsafe](https://img.shields.io/badge/Memory_Safety-100%25_Safe_Rust-10b981.svg)](../../SECURITY.md)
+
+<sub>Architected &amp; Licensed by **GHSFS** · Zero-Dependency IoT Firmware Analysis &amp; Carving</sub>
+
+</div>
 
 ---
 
