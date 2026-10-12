@@ -1,0 +1,12 @@
+FirmCarver (firm-carver)
+Copyright 2026 GHSFS (https://github.com/GHSFS)
+
+This product includes original zero-dependency firmware container parsers
+(U-Boot uImage, Broadcom TRX, Flattened Device Tree DTB), multi-format magic-byte
+stream carving engines (SquashFS, CramFS, Gzip, LZMA, XZ), and static vulnerability
+auditing routines developed by GHSFS.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+Any redistribution or derivative work in Source or Object form must retain
+this NOTICE file and the attribution to GHSFS pursuant to Section 4(d) of
+the Apache License, Version 2.0.

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="540" viewBox="0 0 1200 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1120"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="540" rx="16" fill="url(#arcBg)"/>
+  <rect x="1" y="1" width="1198" height="538" rx="15" stroke="#334155" stroke-width="2"/>
+  <text x="600" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="800" fill="#f8fafc">
+    固件检查与流雕刻架构
+  </text>
+  <text x="600" y="76" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="400" fill="#94a3b8">
+    零依赖纯 Rust 物联网与嵌入式固件解包、多格式魔数数据雕刻与静态漏洞审计引擎
+  </text>
+  <g transform="translate(600, 175)">
+    <rect x="-180" y="-48" width="360" height="96" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+    <text x="0" y="-14" text-anchor="middle" font-family="sans-serif" font-size="11.5" font-weight="700" fill="#818cf8" letter-spacing="1.5">CORE FIRMWARE DISPATCHER</text>
+    <text x="0" y="12" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="800" fill="#ffffff">fcarver CLI &amp; Library</text>
+    <text x="0" y="34" text-anchor="middle" font-family="sans-serif" font-size="11.5" font-weight="500" fill="#cbd5e1">inspect · carve · audit · synth-fw</text>
+  </g>
+  <g transform="translate(215, 145)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#0ea5e9" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#38bdf8">01 · 容器头部解析器</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/image.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">解析 U-Boot uImage、Broadcom TRX 与扁平设备树 (FDT/DTB) 结构</text>
+  </g>
+  <g transform="translate(985, 145)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#c084fc">04 · 漏洞与后门审计</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/vuln_scan.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">静态检测嵌入式私钥、/etc/shadow 密码散列、telnetd 无认证 Shell 与反向连接</text>
+  </g>
+  <g transform="translate(215, 390)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#34d399">02 · 魔数流雕刻引擎</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">src/carve.rs</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">支持大小端 SquashFS v4、CramFS、Gzip、LZMA 与 XZ 压缩流检索</text>
+  </g>
+  <g transform="translate(600, 415)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#fbbf24">03 · 提取与清单管理</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">manifest.json</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">确定性分区切片、有效负载长度计算与结构化 JSON 清单输出</text>
+  </g>
+  <g transform="translate(985, 390)">
+    <rect x="-175" y="-50" width="350" height="100" rx="10" fill="url(#cardGrad)" stroke="#ec4899" stroke-width="1.5"/>
+    <text x="-155" y="-18" font-family="sans-serif" font-size="14" font-weight="700" fill="#f472b6">05 · 确定性固件合成器</text>
+    <text x="-155" y="4" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#e2e8f0">synth-fw &amp; --json</text>
+    <text x="-155" y="26" font-family="sans-serif" font-size="10.5" fill="#94a3b8">一键生成包含 SquashFS 样本的确定性固件映像并输出结构化 JSON</text>
+  </g>
+  <g stroke="#475569" stroke-width="2" stroke-dasharray="4 4">
+    <path d="M 390 145 L 420 175"/>
+    <path d="M 810 145 L 780 175"/>
+    <path d="M 390 390 L 460 223"/>
+    <path d="M 600 365 L 600 223"/>
+    <path d="M 810 390 L 740 223"/>
+  </g>
+</svg>
