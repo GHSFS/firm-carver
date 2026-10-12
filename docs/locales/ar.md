@@ -85,7 +85,11 @@ cargo build --release
 ./target/release/fcarver carve sample_uboot.bin --out ./extracted_fs
 ./target/release/fcarver carve sample_uboot.bin --out ./extracted_fs --json
 
-# 5. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 5. Extract SquashFS directory tree, file permissions, and symlinks
+./target/release/fcarver squashfs sample_uboot.bin --list
+./target/release/fcarver squashfs sample_uboot.bin --json
+
+# 6. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -104,8 +108,10 @@ cargo build --release
 |---|---|---|
 | `inspect` | `<file> [--json]` | Identifies container headers: U-Boot, TRX, FDT, architecture, offsets |
 | `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, Gzip, LZMA partitions to disk |
+| `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|squashfs>]` | Generates a valid synthetic firmware blob for testing/analysis |
+
 
 </details>
 
