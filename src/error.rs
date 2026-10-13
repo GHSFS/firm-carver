@@ -29,6 +29,8 @@ pub enum CarverError {
     CgiAudit(String),
     /// TLS certificate and cryptographic key auditing error
     CertAudit(String),
+    /// JFFS2 flash filesystem parsing, carving, or decompression error
+    Jffs2(String),
 }
 
 impl fmt::Display for CarverError {
@@ -45,6 +47,7 @@ impl fmt::Display for CarverError {
             Self::Integrity(msg) => write!(f, "Integrity attestation error: {}", msg),
             Self::CgiAudit(msg) => write!(f, "CGI audit error: {}", msg),
             Self::CertAudit(msg) => write!(f, "Certificate audit error: {}", msg),
+            Self::Jffs2(msg) => write!(f, "JFFS2 error: {}", msg),
         }
     }
 }

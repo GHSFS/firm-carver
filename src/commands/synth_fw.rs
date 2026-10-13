@@ -34,6 +34,8 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
     }
 
     let synthetic_blob = match args.fw_type.as_str() {
+        "jffs2" => firm_carver::jffs2::build_synthetic_jffs2(false),
+        "jffs2-be" => firm_carver::jffs2::build_synthetic_jffs2(true),
         "cert-blob" => CertSynth::build_synthetic_firmware_cert_blob(),
         "squashfs" => build_synthetic_squashfs(false),
         "fdt" | "dtb" => build_synthetic_fdt(),

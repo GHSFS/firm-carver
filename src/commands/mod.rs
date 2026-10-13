@@ -11,6 +11,7 @@ pub mod common;
 pub mod fdt;
 pub mod inspect;
 pub mod integrity;
+pub mod jffs2;
 pub mod slice;
 pub mod squashfs;
 pub mod synth_fw;
@@ -24,6 +25,7 @@ pub fn dispatch(cli: Cli) -> Result<()> {
         Commands::Carve(args) => carve::handle_carve(args),
         Commands::Audit(args) => audit::handle_audit(args),
         Commands::Squashfs(args) => squashfs::handle_squashfs(args),
+        Commands::Jffs2(args) => jffs2::handle_jffs2(args),
         Commands::Fdt(args) => fdt::handle_fdt(args),
         Commands::ArchDetect(args) => arch_detect::handle_arch_detect(args),
         Commands::Slice(args) => slice::handle_slice(args),

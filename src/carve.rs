@@ -20,6 +20,7 @@ pub enum CarvedKind {
     Gzip,
     Lzma,
     Xz,
+    Jffs2,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,6 +251,12 @@ pub fn scan_carvable_streams(data: &[u8]) -> Vec<CarvedSegment> {
             i += next_offset;
             continue;
         }
+        if let Some(jffs) = crate::jffs2::parse_jffs2_segment_at(data, i) {
+            let next_offset = jffs.length.max(12);
+            segments.push(jffs);
+            i += next_offset;
+            continue;
+        }
         if let Some(xz) = parse_xz_at(data, i) {
             segments.push(xz);
             i += 12;
@@ -285,6 +292,7 @@ pub fn carve_and_extract(data: &[u8], out_dir: &Path, source_file: &str) -> Resu
             CarvedKind::Gzip => "gz",
             CarvedKind::Lzma => "lzma",
             CarvedKind::Xz => "xz",
+            CarvedKind::Jffs2 => "jffs2",
         };
         let file_name = format!("carved_{:08x}_{}.{}", seg.offset, idx, ext);
         let dest_path = out_dir.join(&file_name);
