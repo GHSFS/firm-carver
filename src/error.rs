@@ -27,6 +27,8 @@ pub enum CarverError {
     Integrity(String),
     /// Embedded CGI and web management interface auditing error
     CgiAudit(String),
+    /// TLS certificate and cryptographic key auditing error
+    CertAudit(String),
 }
 
 impl fmt::Display for CarverError {
@@ -42,6 +44,7 @@ impl fmt::Display for CarverError {
             Self::Slicer(msg) => write!(f, "Slicer error: {}", msg),
             Self::Integrity(msg) => write!(f, "Integrity attestation error: {}", msg),
             Self::CgiAudit(msg) => write!(f, "CGI audit error: {}", msg),
+            Self::CertAudit(msg) => write!(f, "Certificate audit error: {}", msg),
         }
     }
 }
