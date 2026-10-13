@@ -4,6 +4,7 @@
 
 pub mod arch_detect;
 pub mod carve;
+pub mod cert_audit;
 pub mod cgi_audit;
 pub mod cli;
 pub mod error;
@@ -21,6 +22,11 @@ pub use arch_detect::{
 };
 pub use carve::{
     carve_and_extract, scan_carvable_streams, CarveManifest, CarvedKind, CarvedSegment,
+};
+pub use cert_audit::{
+    audit_cert_buffer, audit_cert_path, format_cert_report, CertAuditConfig, CertAuditReport,
+    CertFinding, CertIssueKind, CertRuleEngine, CertScanner, CertSeverity, CertSynth,
+    ParsedCertificate,
 };
 pub use cgi_audit::{
     audit_web_path, format_cgi_report, CgiAuditConfig, CgiAuditReport, CgiFinding, CgiRuleEngine,

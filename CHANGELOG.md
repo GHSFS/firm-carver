@@ -2,6 +2,36 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.8.0] - 2026-10-13
+
+### Added
+- **Hardcoded TLS Certificate & Expired Root CA Scanner (`src/cert_audit/`)**:
+  - Implemented zero-dependency, pure-Rust ASN.1 DER parser and RFC 4648 Base64 PEM decoder (`asn1.rs`) supporting X.509 certificate structures, SubjectPublicKeyInfo, signature algorithms, Distinguished Names (CN, O, OU, C, ST, L), and RFC 5280 validity dates (UTCTime and GeneralizedTime).
+  - Implemented PKCS#1 and PKCS#8 private key parsing (`RSAPrivateKey`, `PrivateKeyInfo`, `ECPrivateKey`), extracting raw RSA modulus bytes and bit lengths.
+  - Implemented security audit rule engine (`rules.rs`) checking:
+    - **`CERT-EXP-001` (Critical / High)**: Expired certificates exceeding reference audit date.
+    - **`CERT-EXP-002` (Medium)**: Impending certificate expiration (< 30 days remaining).
+    - **`CERT-SIG-001` (Critical)**: Broken cryptographic signature hash algorithms (MD2, MD5).
+    - **`CERT-SIG-002` (High)**: Deprecated signature hash algorithms (SHA-1).
+    - **`CERT-KEY-001` (Critical)**: Vulnerable RSA public key lengths (< 1024 bits, e.g. 512-bit).
+    - **`CERT-KEY-002` (High)**: Deprecated RSA public key lengths (1024 bits).
+    - **`CERT-SELF-001` (High)**: Self-signed certificates deployed in production firmware.
+    - **`CERT-PRIV-001` (Critical)**: Hardcoded private keys discovered in firmware matching certificate public keys or leaked in filesystem trees.
+    - **`CERT-VAL-001` (Medium)**: Anomalous validity periods (> 25 years duration or post-dated start timestamps).
+  - Implemented recursive directory scanner, single-file bundle parser, and raw binary buffer stream carver (`scanner.rs`) discovering embedded DER/PEM certificates and private keys directly within raw firmware dumps and flash partitions.
+  - Added formatted terminal reporting (`format_cert_report`) with severity breakdowns, certificate details, discovered private key fingerprints, and actionable remediation guidance.
+- **Dedicated CLI Subcommand `cert-audit` (`src/cli.rs`, `src/commands/cert_audit.rs`)**:
+  - `fcarver cert-audit <file>`: inspects certificates in single files, PEM bundles, directories, or raw firmware dumps.
+  - `fcarver cert-audit <file> --min-severity <critical|high|medium|low|info>`: filters findings by minimum severity threshold.
+  - `fcarver cert-audit <file> --reference-date <date|timestamp>`: evaluates validity against custom reference date (RFC 3339 or unix epoch).
+  - `fcarver cert-audit <file> --out <report.json>`: exports comprehensive findings to structured JSON file.
+  - `fcarver cert-audit <file> --json`: outputs structured JSON audit report to stdout.
+- **Deterministic Certificate Fixtures & Synthetic Generation**:
+  - Added deterministic fixture generator (`synth.rs`, `fcarver synth-fw -t cert-store` and `fcarver synth-fw -t cert-blob`) generating valid, expired, expiring-soon, weak MD5/SHA-1, weak RSA-512/1024, self-signed certificates, and paired private keys.
+  - Added dedicated integration test suite (`tests/cert_audit_test.rs`) with 9 tests covering PEM/DER parsing, expiration detection, weak signature detection, weak RSA key identification, self-signed cert detection, private key pairing, stream carving, corrupted input resilience, and report formatting.
+- **CLI Command Architecture Decomposition (`src/commands/`)**:
+  - Refactored command dispatch from monolithic `src/main.rs` into modular `src/commands/` handlers, reducing `src/main.rs` to 18 lines adhering to the project modular guide.
+
 ## [0.7.0] - 2026-10-13
 
 ### Added

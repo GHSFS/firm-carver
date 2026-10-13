@@ -11,10 +11,11 @@ Security updates are applied to the latest release series on the `main` branch.
 
 ## Memory Safety & Firmware Parser Invariants
 
-1. **Zero Unsafe Code**: All container header decoders (U-Boot, TRX, FDT), magic byte carvers, and vulnerability inspection routines are implemented in 100% safe Rust without `unsafe` blocks.
-2. **Strict Bounds Protection**: All slice indices, length offsets, and container partition sizes enforce bounds checking against remaining buffer lengths, preventing out-of-bounds reads and panics on malformed images.
-3. **Memory Exhaustion Defense**: Carving offsets and uncompressed chunk extraction enforce explicit maximum size caps to prevent disk or memory exhaustion from maliciously crafted headers.
-4. **Zeroize Memory Hygiene**: Sensitive temporary keys, discovered credentials, and cryptographic digests enforce secure zeroization on drop.
+1. **Zero Unsafe Code**: All container header decoders (U-Boot, TRX, FDT), magic byte carvers, ASN.1 DER decoders, and vulnerability inspection routines are implemented in 100% safe Rust without `unsafe` blocks.
+2. **Strict Bounds & Overflow Protection**: All slice indices, length offsets, TLV tag length decoders, and container partition sizes enforce explicit bounds checking and checked integer arithmetic (`checked_add`, `checked_mul`) against remaining buffer lengths, preventing out-of-bounds reads and panics on malformed images.
+3. **Memory Exhaustion & Cycle Defense**: Carving offsets and uncompressed chunk extraction enforce explicit maximum size caps. Recursive filesystem directory walks employ path canonicalization, a visited path set, and a strict depth ceiling of 16 levels to guarantee immunity against symlink loops and directory cycle denial-of-service.
+4. **Zeroize Memory Hygiene**: Discovered private key blocks, scraped sensitive credentials, and intermediate byte buffers enforce secure memory wiping via `Zeroize` and `Drop`.
+5. **Constant-Time Verification**: Cryptographic digest checks and key material correlations utilize constant-time comparison algorithms to mitigate timing side-channel attacks.
 
 ## Reporting a Vulnerability
 

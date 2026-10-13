@@ -37,6 +37,8 @@ pub enum Commands {
     Integrity(IntegrityArgs),
     /// Audit embedded /www directory tree or CGI scripts for command injection and unauthenticated routes
     CgiAudit(CgiAuditArgs),
+    /// Audit TLS certificates, root CA stores, weak signature algos, and leaked private keys
+    CertAudit(CertAuditArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -183,10 +185,28 @@ pub struct CgiAuditArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct CertAuditArgs {
+    /// Path to certificate file, PEM bundle, directory, or firmware binary
+    pub file: PathBuf,
+    /// Destination path to export JSON audit report
+    #[arg(short, long)]
+    pub out: Option<PathBuf>,
+    /// Minimum severity filter: critical, high, medium, low, info (default: low)
+    #[arg(short, long, default_value = "low")]
+    pub min_severity: String,
+    /// Reference audit date (RFC 3339 date string like 2026-10-13 or seconds since epoch)
+    #[arg(short, long)]
+    pub reference_date: Option<String>,
+    /// Output audit findings in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }
