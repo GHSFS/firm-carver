@@ -2,6 +2,25 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.6.0] - 2026-10-13
+
+### Added
+- **Cryptographic Hash Digest & Integrity Attestation Generator (`src/integrity/`)**:
+  - Implemented multi-algorithm cryptographic hashing engine (`digest.rs`) providing NIST SHA-256 (32 bytes), NIST SHA-512 (64 bytes), and tree-hashing BLAKE3 (32 bytes) digests.
+  - Implemented constant-time string comparison (`constant_time_eq_str`) across digest verification routines to eliminate side-channel timing leaks.
+  - Implemented verifiable attestation manifest generator (`manifest.rs`) assembling hierarchical integrity manifests (`AttestationManifest`) containing whole-file cryptographic digests alongside individual offsets, byte sizes, and digests for all detected container headers (U-Boot, TRX, FDT) and carved payloads (SquashFS, CramFS, Gzip, LZMA, XZ).
+  - Implemented attestation verification engine (`verify_attestation`) evaluating firmware binaries against recorded manifest schemas, with automated detection of content tampering, boundary overruns, and file truncations.
+  - Added formatted terminal reporting utilities (`format_integrity_report`, `format_verification_report`) generating aligned tables with algorithm filtering.
+- **Dedicated CLI Subcommand `integrity` (`src/cli.rs`, `src/main.rs`)**:
+  - `fcarver integrity <file>`: inspects binary and renders aligned terminal table of file and partition digests.
+  - `fcarver integrity <file> --algo <sha256|sha512|blake3|all>`: filters display by specific cryptographic hash algorithm.
+  - `fcarver integrity <file> --out <manifest.json>`: exports signed cryptographic attestation manifest to file.
+  - `fcarver integrity <file> --verify <manifest.json>`: verifies image against manifest, reporting per-partition verification outcomes and exits with error on integrity mismatch.
+  - `fcarver integrity <file> --json`: outputs structured JSON attestation manifest directly to stdout.
+- **Deterministic Attestation Fixtures & Integration Tests**:
+  - Added deterministic multi-stage attested firmware fixture builder (`synth.rs`, `fcarver synth-fw -t integrity`).
+  - Added dedicated integration test suite (`tests/integrity_test.rs`) with 8 tests covering RFC test vectors for SHA-256, SHA-512, and BLAKE3, constant-time comparisons, manifest generation, clean verification passes, byte-level tamper detection, truncation boundary handling, JSON serialization roundtrips, and report formatting.
+
 ## [0.5.0] - 2026-10-13
 
 ### Added

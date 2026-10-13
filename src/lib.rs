@@ -8,6 +8,7 @@ pub mod cli;
 pub mod error;
 pub mod fdt;
 pub mod image;
+pub mod integrity;
 pub mod slicer;
 pub mod squashfs;
 pub mod vuln_scan;
@@ -28,6 +29,13 @@ pub use fdt::{
 pub use image::{
     build_synthetic_firmware, compute_crc32, scan_containers, ContainerKind, ContainerMetadata,
     DiscoveredContainer,
+};
+pub use integrity::{
+    build_synthetic_attested_firmware, compute_blake3, compute_sha256, compute_sha512,
+    constant_time_eq_str, format_integrity_report, format_verification_report,
+    generate_attestation_manifest, tamper_firmware_byte, truncate_firmware, verify_attestation,
+    AttestationManifest, DigestBundle, DigestMismatch, FindingStatus, HashAlgorithm,
+    PartitionAttestation, VerificationFinding, VerificationReport,
 };
 pub use slicer::{
     analyze_and_slice, build_synthetic_sliced_firmware, compute_entropy_profile, detect_boundaries,

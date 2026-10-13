@@ -33,6 +33,8 @@ pub enum Commands {
     ArchDetect(ArchDetectArgs),
     /// Slice firmware into bootloader, kernel, and filesystem partitions via Shannon entropy
     Slice(SliceArgs),
+    /// Generate or verify cryptographic hash digests (SHA-256, SHA-512, BLAKE3) and integrity attestations
+    Integrity(IntegrityArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -146,10 +148,28 @@ pub struct SliceArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct IntegrityArgs {
+    /// Path to firmware binary file
+    pub file: PathBuf,
+    /// Destination path to export verifiable attestation manifest JSON
+    #[arg(short, long)]
+    pub out: Option<PathBuf>,
+    /// Verify firmware against an existing attestation manifest JSON file
+    #[arg(long)]
+    pub verify: Option<PathBuf>,
+    /// Cryptographic algorithm filter: sha256, sha512, blake3, all (default: all)
+    #[arg(short, long, default_value = "all")]
+    pub algo: String,
+    /// Output results in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

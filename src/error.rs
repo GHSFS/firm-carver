@@ -23,6 +23,8 @@ pub enum CarverError {
     Fdt(String),
     /// Entropy slicer or partition boundary error
     Slicer(String),
+    /// Cryptographic hash, digest, or integrity attestation error
+    Integrity(String),
 }
 
 impl fmt::Display for CarverError {
@@ -36,6 +38,7 @@ impl fmt::Display for CarverError {
             Self::SquashFs(msg) => write!(f, "SquashFS error: {}", msg),
             Self::Fdt(msg) => write!(f, "FDT/DTB error: {}", msg),
             Self::Slicer(msg) => write!(f, "Slicer error: {}", msg),
+            Self::Integrity(msg) => write!(f, "Integrity attestation error: {}", msg),
         }
     }
 }

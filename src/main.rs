@@ -10,6 +10,10 @@ use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
 use firm_carver::fdt::{build_synthetic_fdt, FdtArchive};
 use firm_carver::image::{build_synthetic_firmware, scan_containers, ContainerMetadata};
+use firm_carver::integrity::{
+    build_synthetic_attested_firmware, format_integrity_report, format_verification_report,
+    generate_attestation_manifest, verify_attestation, AttestationManifest, HashAlgorithm,
+};
 use firm_carver::slicer::{
     analyze_and_slice, build_synthetic_sliced_firmware, extract_sliced_partitions,
     format_slicer_report, SlicerConfig,
@@ -346,11 +350,59 @@ fn run() -> Result<()> {
             data.zeroize();
         }
 
+        Commands::Integrity(args) => {
+            let mut data = read_firmware_file(&args.file)?;
+            let algo = args
+                .algo
+                .parse::<HashAlgorithm>()
+                .map_err(CarverError::InvalidArgument)?;
+
+            if let Some(verify_manifest_path) = &args.verify {
+                let manifest = AttestationManifest::from_file(verify_manifest_path)?;
+                let report = verify_attestation(&data, &manifest);
+
+                if args.json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else {
+                    print!("{}", format_verification_report(&report));
+                }
+
+                data.zeroize();
+                if !report.overall_valid {
+                    return Err(CarverError::Integrity(
+                        "Attestation verification failed: cryptographic integrity mismatch detected"
+                            .to_string(),
+                    ));
+                }
+            } else {
+                let target_name = args.file.file_name().unwrap_or_default().to_string_lossy();
+                let manifest = generate_attestation_manifest(&target_name, &data);
+
+                if let Some(out_path) = &args.out {
+                    manifest.save_to_file(out_path)?;
+                    if !args.json {
+                        println!("Wrote attestation manifest to: {}\n", out_path.display());
+                    }
+                }
+
+                if args.json {
+                    println!("{}", serde_json::to_string_pretty(&manifest)?);
+                } else {
+                    print!("{}", format_integrity_report(&manifest, algo));
+                }
+                data.zeroize();
+            }
+        }
+
         Commands::SynthFw(args) => {
             let synthetic_blob = match args.fw_type.as_str() {
                 "squashfs" => build_synthetic_squashfs(false),
                 "fdt" | "dtb" => build_synthetic_fdt(),
                 "multi-stage" | "sliced" | "stages" => build_synthetic_sliced_firmware(),
+                "integrity" | "attested" | "attestation" => {
+                    let (blob, _) = build_synthetic_attested_firmware();
+                    blob
+                }
                 "shellcode-mips" | "mips" => {
                     build_synthetic_shellcode(Architecture::MipsEb, ShellcodeVariant::ExecveSh)
                 }

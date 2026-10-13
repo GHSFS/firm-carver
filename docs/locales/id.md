@@ -37,6 +37,7 @@ firm-carver (fcarver) adalah utilitas CLI dan pustaka Rust murni untuk inspeksi 
 3. **Static Firmware Vulnerability & Backdoor Auditor (`src/vuln_scan.rs`)** — Identifies hardcoded private keys (RSA, EC, OpenSSH, PKCS#8), static `/etc/shadow` root hashes, empty root accounts, unauthenticated root shells (`telnetd -l /bin/sh`), firewall flushing (`iptables -F`), and netcat reverse shells.
 4. **Deterministic Firmware Synthesis (`fcarver synth-fw`)** — Generates valid synthetic firmware blobs containing headers and filesystem streams for automated CI verification and vulnerability signature validation.
 5. **Entropy-Guided Bootloader & Kernel Boundary Slicer (`src/slicer/`)** — Computes sliding-window Shannon entropy profiles, detecting sharp inflection points between bootloaders, compressed kernels, and encrypted filesystems.
+6. **Cryptographic Integrity & Attestation Manifest Generator (`src/integrity/`)** — Computes SHA-256, SHA-512, and BLAKE3 digests across images and carved partitions, emitting and verifying tamper-evident integrity manifests.
 
 </details>
 
@@ -105,7 +106,14 @@ cargo build --release
 ./target/release/fcarver slice sample_uboot.bin --json
 ./target/release/fcarver slice sample_uboot.bin --out ./sliced_fs
 
-# 9. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 9. Generate and verify cryptographic digests (SHA-256, SHA-512, BLAKE3) and integrity manifests
+./target/release/fcarver integrity sample_uboot.bin
+./target/release/fcarver integrity sample_uboot.bin --out manifest.json
+./target/release/fcarver integrity sample_uboot.bin --verify manifest.json
+./target/release/fcarver integrity sample_uboot.bin --algo blake3
+./target/release/fcarver integrity sample_uboot.bin --json
+
+# 10. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -128,8 +136,9 @@ cargo build --release
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
 | `arch-detect` | `<file> [--offset <bytes>] [--length <bytes>] [--min-confidence <float>] [--disasm] [--json]` | Scores CPU architecture (MIPS/ARM/AArch64/RISC-V) and detects shellcode payloads |
 | `slice` | `<file> [--window <bytes>] [--step <bytes>] [--threshold <float>] [--plot] [--out <dir>] [--json]` | Computes sliding Shannon entropy, detects bootloader/kernel boundaries, slices partitions |
+| `integrity` | `<file> [--out <manifest.json>] [--verify <manifest.json>] [--algo <sha256|sha512|blake3|all>] [--json]` | Generates and verifies SHA-256, SHA-512, BLAKE3 digests and partition attestation manifests |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity>]` | Generates a valid synthetic firmware blob for testing/analysis |
 
 
 </details>
