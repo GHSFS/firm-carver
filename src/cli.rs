@@ -31,6 +31,8 @@ pub enum Commands {
     Fdt(FdtArgs),
     /// Detect CPU instruction set architecture and scan for shellcode payloads
     ArchDetect(ArchDetectArgs),
+    /// Slice firmware into bootloader, kernel, and filesystem partitions via Shannon entropy
+    Slice(SliceArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -120,10 +122,34 @@ pub struct ArchDetectArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct SliceArgs {
+    /// Path to firmware binary file
+    pub file: PathBuf,
+    /// Destination directory for sliced partition files (optional)
+    #[arg(short, long)]
+    pub out: Option<PathBuf>,
+    /// Window size in bytes for sliding entropy calculation (default: 512)
+    #[arg(short, long, default_value_t = 512)]
+    pub window: usize,
+    /// Step stride in bytes between consecutive windows (default: 256)
+    #[arg(short, long, default_value_t = 256)]
+    pub step: usize,
+    /// Delta entropy threshold for inflection point detection (default: 0.80)
+    #[arg(short, long, default_value_t = 0.80)]
+    pub threshold: f64,
+    /// Display ASCII entropy curve in terminal
+    #[arg(long)]
+    pub plot: bool,
+    /// Output results in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

@@ -21,6 +21,8 @@ pub enum CarverError {
     SquashFs(String),
     /// Flattened Device Tree (FDT/DTB) parsing or disassembly error
     Fdt(String),
+    /// Entropy slicer or partition boundary error
+    Slicer(String),
 }
 
 impl fmt::Display for CarverError {
@@ -33,6 +35,7 @@ impl fmt::Display for CarverError {
             Self::InvalidArgument(msg) => write!(f, "Invalid argument: {}", msg),
             Self::SquashFs(msg) => write!(f, "SquashFS error: {}", msg),
             Self::Fdt(msg) => write!(f, "FDT/DTB error: {}", msg),
+            Self::Slicer(msg) => write!(f, "Slicer error: {}", msg),
         }
     }
 }

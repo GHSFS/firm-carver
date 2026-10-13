@@ -36,6 +36,7 @@ firm-carver (fcarver) es una herramienta CLI y biblioteca en Rust puro para el a
 2. **Magic-Byte Stream Carving Engine (`src/carve.rs`)** — Scans raw firmware blobs for SquashFS 4.0 (`0x73717368` / `0x68737173`), CramFS (`0x28cd3d45` / `0x453dcd28`), Gzip (`0x1F8B08`), LZMA (`0x5D0000`), and XZ (`0xFD377A585A00`), extracts partitions into dedicated files, and writes structured JSON manifests.
 3. **Static Firmware Vulnerability & Backdoor Auditor (`src/vuln_scan.rs`)** — Identifies hardcoded private keys (RSA, EC, OpenSSH, PKCS#8), static `/etc/shadow` root hashes, empty root accounts, unauthenticated root shells (`telnetd -l /bin/sh`), firewall flushing (`iptables -F`), and netcat reverse shells.
 4. **Deterministic Firmware Synthesis (`fcarver synth-fw`)** — Generates valid synthetic firmware blobs containing headers and filesystem streams for automated CI verification and vulnerability signature validation.
+5. **Entropy-Guided Bootloader & Kernel Boundary Slicer (`src/slicer/`)** — Computes sliding-window Shannon entropy profiles, detecting sharp inflection points between bootloaders, compressed kernels, and encrypted filesystems.
 
 </details>
 
@@ -99,7 +100,12 @@ cargo build --release
 ./target/release/fcarver arch-detect sample_uboot.bin --json
 ./target/release/fcarver arch-detect sample_uboot.bin --disasm
 
-# 8. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 8. Slice bootloader, kernel, and filesystem partitions via Shannon entropy
+./target/release/fcarver slice sample_uboot.bin --plot
+./target/release/fcarver slice sample_uboot.bin --json
+./target/release/fcarver slice sample_uboot.bin --out ./sliced_fs
+
+# 9. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -121,8 +127,9 @@ cargo build --release
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
 | `arch-detect` | `<file> [--offset <bytes>] [--length <bytes>] [--min-confidence <float>] [--disasm] [--json]` | Scores CPU architecture (MIPS/ARM/AArch64/RISC-V) and detects shellcode payloads |
+| `slice` | `<file> [--window <bytes>] [--step <bytes>] [--threshold <float>] [--plot] [--out <dir>] [--json]` | Computes sliding Shannon entropy, detects bootloader/kernel boundaries, slices partitions |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv>]` | Generates a valid synthetic firmware blob for testing/analysis |
 
 
 </details>

@@ -10,30 +10,59 @@ use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
 use firm_carver::fdt::{build_synthetic_fdt, FdtArchive};
 use firm_carver::image::{build_synthetic_firmware, scan_containers, ContainerMetadata};
+use firm_carver::slicer::{
+    analyze_and_slice, build_synthetic_sliced_firmware, extract_sliced_partitions,
+    format_slicer_report, SlicerConfig,
+};
 use firm_carver::squashfs::{build_synthetic_squashfs, SquashFsArchive};
 use firm_carver::{carve_and_extract, scan_vulnerabilities, VulnSeverity};
 use std::fs;
-
+use std::path::Path;
 use std::process;
 use zeroize::Zeroize;
+
+fn read_firmware_file(path: &Path) -> Result<Vec<u8>> {
+    fs::read(path).map_err(|e| {
+        CarverError::Io(std::io::Error::new(
+            e.kind(),
+            format!("Failed to read {}: {}", path.display(), e),
+        ))
+    })
+}
+
+fn find_magic_or_default(data: &[u8], offset: Option<usize>, magics: &[&[u8]]) -> usize {
+    if let Some(off) = offset {
+        return off;
+    }
+    for i in 0..data.len().saturating_sub(4) {
+        if magics.iter().any(|m| data[i..].starts_with(m)) {
+            return i;
+        }
+    }
+    0
+}
+
+fn validate_offset(offset: usize, len: usize) -> Result<()> {
+    if offset >= len {
+        Err(CarverError::InvalidArgument(format!(
+            "Offset 0x{:08X} exceeds file size {} bytes",
+            offset, len
+        )))
+    } else {
+        Ok(())
+    }
+}
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
         Commands::Inspect(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
+            let mut data = read_firmware_file(&args.file)?;
             let containers = scan_containers(&data);
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&containers)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&containers)?);
             } else {
                 println!("=== FirmCarver Container Inspector ===");
                 println!("Target Image: {}", args.file.display());
@@ -105,18 +134,11 @@ fn run() -> Result<()> {
         }
 
         Commands::Carve(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
+            let mut data = read_firmware_file(&args.file)?;
             let manifest = carve_and_extract(&data, &args.out, &args.file.to_string_lossy())?;
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&manifest)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&manifest)?);
             } else {
                 println!("=== FirmCarver Magic Stream Carving Engine ===");
                 println!("Source File:      {}", args.file.display());
@@ -143,18 +165,11 @@ fn run() -> Result<()> {
         }
 
         Commands::Audit(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
+            let mut data = read_firmware_file(&args.file)?;
             let report = scan_vulnerabilities(&data, &args.file.to_string_lossy());
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&report)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&report)?);
             } else {
                 println!("=== FirmCarver Static Vulnerability & Backdoor Audit ===");
                 println!("Target File:   {}", report.target_file);
@@ -188,40 +203,15 @@ fn run() -> Result<()> {
         }
 
         Commands::Squashfs(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
-            let start_offset = if let Some(off) = args.offset {
-                off
-            } else {
-                let mut found = None;
-                for i in 0..data.len().saturating_sub(4) {
-                    let slice = &data[i..i + 4];
-                    if slice == [0x73, 0x71, 0x73, 0x68] || slice == [0x68, 0x73, 0x71, 0x73] {
-                        found = Some(i);
-                        break;
-                    }
-                }
-                found.unwrap_or(0)
-            };
-
-            if start_offset >= data.len() {
-                return Err(CarverError::InvalidArgument(format!(
-                    "Offset 0x{:08X} exceeds file size {} bytes",
-                    start_offset,
-                    data.len()
-                )));
-            }
+            let mut data = read_firmware_file(&args.file)?;
+            let magics: [&[u8]; 2] = [b"sqsh", b"hsqs"];
+            let start_offset = find_magic_or_default(&data, args.offset, &magics);
+            validate_offset(start_offset, data.len())?;
 
             let archive = SquashFsArchive::parse(&data[start_offset..])?;
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&archive)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&archive)?);
             } else if args.list {
                 println!("=== FirmCarver SquashFS v4 File Listing ===");
                 println!(
@@ -277,39 +267,15 @@ fn run() -> Result<()> {
         }
 
         Commands::Fdt(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
-            let start_offset = if let Some(off) = args.offset {
-                off
-            } else {
-                let mut found = None;
-                for i in 0..data.len().saturating_sub(4) {
-                    if data[i..i + 4] == [0xD0, 0x0D, 0xFE, 0xED] {
-                        found = Some(i);
-                        break;
-                    }
-                }
-                found.unwrap_or(0)
-            };
-
-            if start_offset >= data.len() {
-                return Err(CarverError::InvalidArgument(format!(
-                    "Offset 0x{:08X} exceeds file size {} bytes",
-                    start_offset,
-                    data.len()
-                )));
-            }
+            let mut data = read_firmware_file(&args.file)?;
+            let magics: [&[u8]; 1] = [&[0xD0, 0x0D, 0xFE, 0xED]];
+            let start_offset = find_magic_or_default(&data, args.offset, &magics);
+            validate_offset(start_offset, data.len())?;
 
             let archive = FdtArchive::parse(&data[start_offset..])?;
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&archive)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&archive)?);
             } else if args.dts {
                 print!("{}", archive.format_dts());
             } else if args.hardware {
@@ -326,34 +292,17 @@ fn run() -> Result<()> {
                 println!("Reservations:     {}", archive.mem_rsvmap.len());
                 println!();
                 print!("{}", archive.format_hardware_summary());
-                println!();
-                println!("Hint: Run with --dts for full disassembler output or --json.");
+                println!("\nHint: Run with --dts for full disassembler output or --json.");
             }
             data.zeroize();
         }
 
         Commands::ArchDetect(args) => {
-            let mut data = fs::read(&args.file).map_err(|e| {
-                CarverError::Io(std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to read {}: {}", args.file.display(), e),
-                ))
-            })?;
-
-            if args.offset >= data.len() {
-                return Err(CarverError::InvalidArgument(format!(
-                    "Offset 0x{:08X} exceeds file size {} bytes",
-                    args.offset,
-                    data.len()
-                )));
-            }
+            let mut data = read_firmware_file(&args.file)?;
+            validate_offset(args.offset, data.len())?;
 
             let slice = &data[args.offset..];
-            let chunk_len = if let Some(len) = args.length {
-                len.min(slice.len())
-            } else {
-                slice.len()
-            };
+            let chunk_len = args.length.unwrap_or(slice.len()).min(slice.len());
             let analyze_slice = &slice[..chunk_len];
 
             let detector = ArchDetector {
@@ -362,10 +311,37 @@ fn run() -> Result<()> {
             let report = detector.analyze(analyze_slice, &args.file.to_string_lossy(), args.offset);
 
             if args.json {
-                let json_output = serde_json::to_string_pretty(&report)?;
-                println!("{}", json_output);
+                println!("{}", serde_json::to_string_pretty(&report)?);
             } else {
                 print!("{}", format_arch_report(&report));
+            }
+            data.zeroize();
+        }
+
+        Commands::Slice(args) => {
+            let mut data = read_firmware_file(&args.file)?;
+            let config = SlicerConfig {
+                window_size: args.window,
+                step_size: args.step,
+                threshold: args.threshold,
+            };
+            let report = analyze_and_slice(&data, &args.file.to_string_lossy(), &config);
+
+            if let Some(out_dir) = &args.out {
+                let written = extract_sliced_partitions(&data, &report.partitions, out_dir)?;
+                if !args.json {
+                    println!(
+                        "Extracted {} partition files into: {}\n",
+                        written.len(),
+                        out_dir.display()
+                    );
+                }
+            }
+
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                print!("{}", format_slicer_report(&report, args.plot));
             }
             data.zeroize();
         }
@@ -374,6 +350,7 @@ fn run() -> Result<()> {
             let synthetic_blob = match args.fw_type.as_str() {
                 "squashfs" => build_synthetic_squashfs(false),
                 "fdt" | "dtb" => build_synthetic_fdt(),
+                "multi-stage" | "sliced" | "stages" => build_synthetic_sliced_firmware(),
                 "shellcode-mips" | "mips" => {
                     build_synthetic_shellcode(Architecture::MipsEb, ShellcodeVariant::ExecveSh)
                 }

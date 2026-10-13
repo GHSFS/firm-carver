@@ -2,6 +2,30 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.5.0] - 2026-10-13
+
+### Added
+- **Entropy-Guided Bootloader & Kernel Boundary Slicer (`src/slicer/`)**:
+  - Implemented pure-Rust sliding-window Shannon entropy profiler (`entropy.rs`) with configurable window and step sizes, computing bit-level information density curves (0.0 to 8.0 bits/byte) and Chi-square goodness-of-fit statistics against uniform distributions.
+  - Implemented boundary and inflection detector (`boundary.rs`) discovering sharp transitions between regions:
+    - `CompressionRise`: sharp upward transitions from bootloader/uncompressed code into compressed kernel or encrypted streams.
+    - `CompressionDrop`: sharp downward transitions leaving compressed payloads into uncompressed configurations or padding.
+    - `PaddingEnter`: transitions into zero-filled or erased flash padding (`0x00`/`0xFF`).
+    - `PaddingExit`: transitions out of padding into active executable code or ciphertext.
+  - Implemented contiguous partition slicer segmenting entire firmware blobs into discrete partitions (`Padding`, `TextOrData`, `Bootloader`, `CompressedKernel`, `EncryptedOrRandom`) with mean/min/max entropy statistics and descriptive metadata.
+  - Implemented partition slice extractor exporting discrete partition binaries to disk (`--out <dir>`) with human-readable filenames.
+  - Implemented terminal ASCII entropy curve visualizer (`render_ascii_entropy_plot`) plotting 8-level height curves directly in terminal output.
+- **Dedicated CLI Subcommand `slice` (`src/cli.rs`, `src/main.rs`)**:
+  - `fcarver slice <file>`: inspects global entropy, discovers contiguous partitions, and detects sharp inflection boundaries.
+  - `fcarver slice <file> --window <bytes> --step <bytes>`: custom sliding-window geometry (default: 512B window, 256B stride).
+  - `fcarver slice <file> --threshold <float>`: configurable inflection delta sensitivity (default: 0.80).
+  - `fcarver slice <file> --plot`: displays high-resolution ASCII entropy curve in terminal.
+  - `fcarver slice <file> --out <dir>`: extracts carved partitions into individual `.bin` files.
+  - `fcarver slice <file> --json`: outputs structured JSON telemetry with partitions, boundaries, and optional window telemetry.
+- **Deterministic Multi-Stage Firmware Fixture Generator & Integration Tests**:
+  - Added deterministic 5-stage synthetic firmware fixture generator (`synth.rs`, `fcarver synth-fw -t multi-stage`).
+  - Added dedicated integration test suite (`tests/slicer_test.rs`) with 8 tests covering entropy calculations, sliding-window profiles, boundary detection, partition classification, disk extraction, terminal ASCII plots, and corrupted input resilience.
+
 ## [0.4.0] - 2026-10-13
 
 ### Added
