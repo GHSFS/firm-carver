@@ -11,6 +11,7 @@ pub mod error;
 pub mod fdt;
 pub mod image;
 pub mod integrity;
+pub mod jffs2;
 pub mod slicer;
 pub mod squashfs;
 pub mod vuln_scan;
@@ -47,6 +48,11 @@ pub use integrity::{
     generate_attestation_manifest, tamper_firmware_byte, truncate_firmware, verify_attestation,
     AttestationManifest, DigestBundle, DigestMismatch, FindingStatus, HashAlgorithm,
     PartitionAttestation, VerificationFinding, VerificationReport,
+};
+pub use jffs2::{
+    build_synthetic_jffs2, extract_archive_to_disk, format_mode_string, scan_jffs2_partitions,
+    CommonNodeHeader, Endianness, Jffs2Archive, Jffs2Entry, Jffs2FileType, Jffs2PartitionSpan,
+    RawDirent, RawInode,
 };
 pub use slicer::{
     analyze_and_slice, build_synthetic_sliced_firmware, compute_entropy_profile, detect_boundaries,

@@ -2,6 +2,26 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.9.0] - 2026-10-13
+
+### Added
+- **JFFS2 Flash Filesystem Carver & Node Reconstructor (`src/jffs2/`)**:
+  - Implemented zero-dependency, pure-Rust JFFS2 parser and stream carver for embedded NOR/NAND flash images across Little-Endian (`0x85 0x19`) and Big-Endian (`0x19 0x85`) architectures (`node.rs`, `types.rs`).
+  - Added on-flash CRC32 validation for 12-byte `CommonNodeHeader`, cleanmarker nodes (`0x2003`), directory entries (`0xE001`), and inode descriptors (`0xE002`).
+  - Implemented multi-algorithm payload decompressor (`decompress.rs`) supporting uncompressed chunks, zero fills, Zlib/Deflate streams, and RTIME run-length decompression with rigorous boundary checking and dictionary backoff safety (mitigating CVE-2024-57850 integer and pointer overrun patterns).
+  - Implemented directory tree reconstruction engine (`reconstruct.rs`) resolving directory parent-child graphs, multi-chunk inode data reassembly by version ordering, deletion tombstone filtering (`ino == 0`), symbolic link target extraction, and standard UNIX mode formatting (`drwxr-xr-x`, `lrwxrwxrwx`).
+  - Added path traversal defense in extraction logic preventing malicious symlink or relative path escapes (`/../../`).
+  - Implemented continuous flash partition carver (`carver.rs`) discovering JFFS2 node chains within unaligned, padded, or concatenated firmware dumps, integrated with `scan_carvable_streams`.
+- **Dedicated CLI Subcommand `jffs2` (`src/cli.rs`, `src/commands/jffs2.rs`)**:
+  - `fcarver jffs2 <file>`: inspects JFFS2 flash filesystem headers, partition statistics, and recovered files.
+  - `fcarver jffs2 <file> --list`: displays full UNIX `ls -la` table of recovered directories, regular files, and symlinks.
+  - `fcarver jffs2 <file> --extract <dir>`: safely extracts all reconstructed files and directory trees to disk with path traversal guards.
+  - `fcarver jffs2 <file> --offset <bytes>`: parses JFFS2 filesystem located at explicit byte offset.
+  - `fcarver jffs2 <file> --json`: outputs structured JSON archive metadata to stdout.
+- **Deterministic Synthetic JFFS2 Fixtures (`src/jffs2/synth.rs`)**:
+  - Added deterministic fixture generator creating little-endian (`synth-fw -t jffs2`) and big-endian (`synth-fw -t jffs2-be`) JFFS2 images with valid CRC32 headers, cleanmarkers, directories (`/etc`, `/bin`), RTIME-compressed banners, Zlib-compressed busybox binaries, multi-chunk hosts files, deletion tombstones, and symlinks.
+  - Added dedicated integration test suite (`tests/jffs2_test.rs`) with 11 tests covering LE/BE parsing, RTIME decompression bounds safety, Zlib decompression, multi-chunk reassembly, tombstone filtering, symlink resolution, path traversal defense, stream carving, corrupted input resilience, and report formatting.
+
 ## [0.8.0] - 2026-10-13
 
 ### Added

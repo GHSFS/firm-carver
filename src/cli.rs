@@ -27,6 +27,8 @@ pub enum Commands {
     Audit(AuditArgs),
     /// Extract directory tree and inode metadata from SquashFS v4 filesystems
     Squashfs(SquashfsArgs),
+    /// Carve, parse, and reconstruct JFFS2 flash filesystem directory trees and nodes
+    Jffs2(Jffs2Args),
     /// Disassemble Flattened Device Tree (FDT/DTB) and map peripheral hardware
     Fdt(FdtArgs),
     /// Detect CPU instruction set architecture and scan for shellcode payloads
@@ -80,6 +82,24 @@ pub struct SquashfsArgs {
     /// Byte offset where SquashFS filesystem begins (default: auto-scan or 0)
     #[arg(short, long)]
     pub offset: Option<usize>,
+    /// Output extracted filesystem metadata in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+    /// List detailed file tree with permissions, sizes, and timestamps
+    #[arg(short, long)]
+    pub list: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct Jffs2Args {
+    /// Path to firmware binary or extracted JFFS2 flash dump
+    pub file: PathBuf,
+    /// Byte offset where JFFS2 filesystem begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Destination directory to extract reconstructed files and directory tree
+    #[arg(short, long)]
+    pub extract: Option<PathBuf>,
     /// Output extracted filesystem metadata in structured JSON format
     #[arg(long)]
     pub json: bool,
