@@ -4,6 +4,7 @@
 
 pub mod arch_detect;
 pub mod carve;
+pub mod cgi_audit;
 pub mod cli;
 pub mod error;
 pub mod fdt;
@@ -20,6 +21,10 @@ pub use arch_detect::{
 };
 pub use carve::{
     carve_and_extract, scan_carvable_streams, CarveManifest, CarvedKind, CarvedSegment,
+};
+pub use cgi_audit::{
+    audit_web_path, format_cgi_report, CgiAuditConfig, CgiAuditReport, CgiFinding, CgiRuleEngine,
+    CgiScanner, CgiSeverity, CgiSynth, CgiVulnCategory,
 };
 pub use error::{CarverError, Result};
 pub use fdt::{

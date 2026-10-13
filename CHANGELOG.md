@@ -2,6 +2,31 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.7.0] - 2026-10-13
+
+### Added
+- **Embedded Web Management Interface & CGI Script Static Auditor (`src/cgi_audit/`)**:
+  - Implemented static security analysis engine (`rules.rs`, `scanner.rs`) auditing extracted router `/www` web hierarchies, shell CGI scripts, and embedded web handlers without external dependencies.
+  - Implemented static vulnerability detectors covering critical embedded web weakness patterns:
+    - **Command Injection (CWE-78)**: Unsanitized HTTP environment variables (`$QUERY_STRING`, `$POST_DATA`, HTTP headers) interpolated into shell subshells or command pipelines (`ping`, `traceroute`, `cat`, `iptables`).
+    - **Process Execution Sinks (CWE-78)**: Dangerous system execution sinks (`system()`, `popen()`, `passthru()`, `shell_exec()`, `io.popen()`) invoked with variable arguments.
+    - **Embedded Web Engine Sinks (CWE-78)**: GoAhead WebServer, Boa, and mini_httpd variable getters (`websGetVar`, `cgiFormString`, `aspFormProcess`) piped to shell execution sinks.
+    - **Authentication Bypass & Backdoor Cookies (CWE-306)**: Detection of known administrative backdoor cookies (`dlink_uid=0`), magic parameters (`super_admin=1`, `admin_bypass`), and unauthenticated administrative routes (`reboot`, `factory_reset`, `upgrade`, `backup`).
+    - **Hardcoded Administrative Credentials (CWE-798)**: Static credential comparisons (`admin:admin`, `password == "admin"`) embedded in web authentication logic.
+    - **Path Traversal & Arbitrary File Reads (CWE-22)**: Parameter-controlled file reads (`cat $file`, `readfile()`) lacking directory traversal guards and basename sanitization.
+    - **Sensitive System Asset Disclosure (CWE-200)**: Direct exposure of `/etc/shadow`, `/tmp/nvram`, and kernel diagnostic buffers (`/proc/kmsg`).
+    - **Debug Daemon Activations (CWE-16)**: Web scripts activating remote root shells (`telnetd -l /bin/sh`) or flushing firewall policies.
+  - Added recursive filesystem tree walker with symlink loop detection and in-memory virtual tree auditing for extracted filesystems and raw firmware streams.
+  - Added formatted terminal reporting (`format_cgi_report`) with severity breakdown, CWE mappings, matched evidence snippets, and actionable remediation guidance.
+- **Dedicated CLI Subcommand `cgi-audit` (`src/cli.rs`, `src/main.rs`)**:
+  - `fcarver cgi-audit <target>`: recursively audits web root directory or individual CGI script.
+  - `fcarver cgi-audit <target> --min-severity <critical|high|medium|low|info>`: filters findings by minimum severity threshold.
+  - `fcarver cgi-audit <target> --out <report.json>`: exports comprehensive static audit findings to structured JSON file.
+  - `fcarver cgi-audit <target> --json`: outputs structured JSON audit report to stdout for CI/CD integration.
+- **Deterministic Synthetic Web Tree & Integration Test Suite**:
+  - Added synthetic embedded router `/www` fixture generator (`synth.rs`, `fcarver synth-fw -t cgi-tree` and `fcarver synth-fw -t vuln-cgi`).
+  - Added dedicated integration test suite (`tests/cgi_audit_test.rs`) with 9 tests covering command injection detection, unauthenticated administrative route identification, backdoor cookie matching, hardcoded credential parsing, path traversal detection, sensitive information disclosure, safe script false-positive suppression, virtual tree severity filtering, and end-to-end directory audits.
+
 ## [0.6.0] - 2026-10-13
 
 ### Added
