@@ -3,6 +3,9 @@
 // Copyright 2026 GHSFS. See the NOTICE file for attribution details.
 
 use clap::Parser;
+use firm_carver::arch_detect::{
+    build_synthetic_shellcode, format_arch_report, ArchDetector, Architecture, ShellcodeVariant,
+};
 use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
 use firm_carver::fdt::{build_synthetic_fdt, FdtArchive};
@@ -329,25 +332,78 @@ fn run() -> Result<()> {
             data.zeroize();
         }
 
-        Commands::SynthFw(args) => {
-            let synthetic_blob = if args.fw_type == "squashfs" {
-                build_synthetic_squashfs(false)
-            } else if args.fw_type == "fdt" || args.fw_type == "dtb" {
-                build_synthetic_fdt()
+        Commands::ArchDetect(args) => {
+            let mut data = fs::read(&args.file).map_err(|e| {
+                CarverError::Io(std::io::Error::new(
+                    e.kind(),
+                    format!("Failed to read {}: {}", args.file.display(), e),
+                ))
+            })?;
+
+            if args.offset >= data.len() {
+                return Err(CarverError::InvalidArgument(format!(
+                    "Offset 0x{:08X} exceeds file size {} bytes",
+                    args.offset,
+                    data.len()
+                )));
+            }
+
+            let slice = &data[args.offset..];
+            let chunk_len = if let Some(len) = args.length {
+                len.min(slice.len())
             } else {
-                let mut sample_payload = Vec::new();
-                sample_payload.extend_from_slice(b"BOOTLOADER_INIT_ROUTINE");
-                sample_payload.extend_from_slice(&0x73717368u32.to_le_bytes());
-                sample_payload.extend_from_slice(&12u32.to_le_bytes());
-                sample_payload.extend_from_slice(&1_700_000_000u32.to_le_bytes());
-                sample_payload.extend_from_slice(&4096u32.to_le_bytes());
-                sample_payload.resize(64, 0);
-                sample_payload.extend_from_slice(&4u16.to_le_bytes());
-                sample_payload.extend_from_slice(&0u16.to_le_bytes());
-                sample_payload.resize(80, 0);
-                sample_payload.extend_from_slice(&128u64.to_le_bytes());
-                sample_payload.resize(128, 0xAA);
-                build_synthetic_firmware(&args.fw_type, &sample_payload)?
+                slice.len()
+            };
+            let analyze_slice = &slice[..chunk_len];
+
+            let detector = ArchDetector {
+                min_confidence: args.min_confidence,
+            };
+            let report = detector.analyze(analyze_slice, &args.file.to_string_lossy(), args.offset);
+
+            if args.json {
+                let json_output = serde_json::to_string_pretty(&report)?;
+                println!("{}", json_output);
+            } else {
+                print!("{}", format_arch_report(&report));
+            }
+            data.zeroize();
+        }
+
+        Commands::SynthFw(args) => {
+            let synthetic_blob = match args.fw_type.as_str() {
+                "squashfs" => build_synthetic_squashfs(false),
+                "fdt" | "dtb" => build_synthetic_fdt(),
+                "shellcode-mips" | "mips" => {
+                    build_synthetic_shellcode(Architecture::MipsEb, ShellcodeVariant::ExecveSh)
+                }
+                "shellcode-arm" | "arm" => {
+                    build_synthetic_shellcode(Architecture::ArmV7, ShellcodeVariant::ExecveSh)
+                }
+                "shellcode-aarch64" | "aarch64" | "arm64" => {
+                    build_synthetic_shellcode(Architecture::AArch64, ShellcodeVariant::ExecveSh)
+                }
+                "shellcode-riscv" | "riscv" => {
+                    build_synthetic_shellcode(Architecture::RiscV32, ShellcodeVariant::ExecveSh)
+                }
+                "shellcode-sled" => {
+                    build_synthetic_shellcode(Architecture::ArmV7, ShellcodeVariant::NopSled)
+                }
+                _ => {
+                    let mut sample_payload = Vec::new();
+                    sample_payload.extend_from_slice(b"BOOTLOADER_INIT_ROUTINE");
+                    sample_payload.extend_from_slice(&0x73717368u32.to_le_bytes());
+                    sample_payload.extend_from_slice(&12u32.to_le_bytes());
+                    sample_payload.extend_from_slice(&1_700_000_000u32.to_le_bytes());
+                    sample_payload.extend_from_slice(&4096u32.to_le_bytes());
+                    sample_payload.resize(64, 0);
+                    sample_payload.extend_from_slice(&4u16.to_le_bytes());
+                    sample_payload.extend_from_slice(&0u16.to_le_bytes());
+                    sample_payload.resize(80, 0);
+                    sample_payload.extend_from_slice(&128u64.to_le_bytes());
+                    sample_payload.resize(128, 0xAA);
+                    build_synthetic_firmware(&args.fw_type, &sample_payload)?
+                }
             };
 
             fs::write(&args.output, &synthetic_blob).map_err(|e| {

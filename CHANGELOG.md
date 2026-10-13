@@ -2,6 +2,26 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.4.0] - 2026-10-13
+
+### Added
+- **Cross-Architecture Machine Code Scoring & Shellcode Detector (`src/arch_detect.rs`, `src/arch_detect/`)**:
+  - Implemented multi-architecture instruction set statistical analyzer evaluating valid opcodes, registers, branch densities, and prologue/epilogue sequences across MIPS32 Big-Endian, MIPS32 Little-Endian, ARMv7 (32-bit), ARM Thumb/Thumb-2, AArch64 (ARM 64-bit), RISC-V 32-bit (RV32), and RISC-V 64-bit (RV64).
+  - Implemented exploit payload pattern matcher identifying NOP sled landing pads, interactive `/bin/sh` or `/bin/busybox` string pointers, and architecture-specific Linux `sys_execve` syscall sequences:
+    - MIPS (EB/EL): `li $v0, 4011` followed by `syscall` (`0x24020FA7` / `0xA70F0224`).
+    - ARMv7: `mov r7, #11` followed by `svc 0` / `swi 0x90000B`.
+    - AArch64: `mov x8, #221` followed by `svc #0`.
+    - RISC-V: `addi a7, zero, 221` followed by `ecall`.
+  - Implemented lightweight pure-Rust disassembler (`disasm.rs`) generating mnemonic and operand strings across all supported architectures without external C dependencies.
+- **Dedicated CLI Subcommand `arch-detect` (`src/cli.rs`, `src/main.rs`)**:
+  - `fcarver arch-detect <file>`: inspects uncompressed raw code segments and reports candidate instruction set confidence distribution, shellcode findings, and sample disassembled instructions.
+  - `fcarver arch-detect <file> --offset <bytes> [--length <bytes>]`: focuses forensic scoring on specific carved segments or bootloader partitions.
+  - `fcarver arch-detect <file> --min-confidence <float>`: configures classification threshold (default: 0.30).
+  - `fcarver arch-detect <file> --json`: outputs structured JSON containing candidate scores, shellcode findings, and decoded instruction tokens.
+- **Deterministic Synthetic Shellcode Generator & Integration Tests**:
+  - Added synthetic shellcode generator (`synth.rs`) and CLI (`fcarver synth-fw --type shellcode-mips`, `shellcode-arm`, `shellcode-aarch64`, `shellcode-riscv`, `shellcode-sled`).
+  - Added dedicated integration test suite (`tests/arch_detect_test.rs`) with 9 tests covering MIPS EB/EL, ARMv7, AArch64, RISC-V, NOP sleds, disassembler output, terminal reports, and small/noise bounds safety.
+
 ## [0.3.0] - 2026-10-13
 
 ### Added

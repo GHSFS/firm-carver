@@ -29,6 +29,8 @@ pub enum Commands {
     Squashfs(SquashfsArgs),
     /// Disassemble Flattened Device Tree (FDT/DTB) and map peripheral hardware
     Fdt(FdtArgs),
+    /// Detect CPU instruction set architecture and scan for shellcode payloads
+    ArchDetect(ArchDetectArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -97,10 +99,31 @@ pub struct FdtArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct ArchDetectArgs {
+    /// Path to firmware binary file or extracted code chunk
+    pub file: PathBuf,
+    /// Byte offset where code chunk begins (default: 0)
+    #[arg(short, long, default_value_t = 0)]
+    pub offset: usize,
+    /// Maximum length in bytes to analyze (default: 65536 or full file)
+    #[arg(short, long)]
+    pub length: Option<usize>,
+    /// Minimum confidence threshold for architecture identification (0.0 to 1.0, default: 0.30)
+    #[arg(long, default_value_t = 0.30)]
+    pub min_confidence: f64,
+    /// Disassemble sample instructions at start offset
+    #[arg(long)]
+    pub disasm: bool,
+    /// Output audit report in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob
     pub output: PathBuf,
-    /// Container type: uboot, trx, fdt, squashfs (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

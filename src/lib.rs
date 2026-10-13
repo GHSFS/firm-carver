@@ -2,6 +2,7 @@
 // http://www.apache.org/licenses/LICENSE-2.0>.
 // Copyright 2026 GHSFS. See the NOTICE file for attribution details.
 
+pub mod arch_detect;
 pub mod carve;
 pub mod cli;
 pub mod error;
@@ -10,6 +11,11 @@ pub mod image;
 pub mod squashfs;
 pub mod vuln_scan;
 
+pub use arch_detect::{
+    build_synthetic_shellcode, detect_shellcode_patterns, disassemble_chunk, format_arch_report,
+    ArchAuditReport, ArchDetector, ArchScore, Architecture, DecodedInsn, ShellcodeCategory,
+    ShellcodeFinding, ShellcodeSeverity, ShellcodeVariant,
+};
 pub use carve::{
     carve_and_extract, scan_carvable_streams, CarveManifest, CarvedKind, CarvedSegment,
 };

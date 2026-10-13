@@ -94,7 +94,12 @@ cargo build --release
 ./target/release/fcarver fdt sample_uboot.bin --hardware
 ./target/release/fcarver fdt sample_uboot.bin --json
 
-# 7. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 7. Detect CPU instruction set and scan for shellcode payloads (MIPS, ARM, AArch64, RISC-V)
+./target/release/fcarver arch-detect sample_uboot.bin
+./target/release/fcarver arch-detect sample_uboot.bin --json
+./target/release/fcarver arch-detect sample_uboot.bin --disasm
+
+# 8. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -115,8 +120,9 @@ cargo build --release
 | `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, Gzip, LZMA partitions to disk |
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
+| `arch-detect` | `<file> [--offset <bytes>] [--length <bytes>] [--min-confidence <float>] [--disasm] [--json]` | Scores CPU architecture (MIPS/ARM/AArch64/RISC-V) and detects shellcode payloads |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv>]` | Generates a valid synthetic firmware blob for testing/analysis |
 
 
 </details>
