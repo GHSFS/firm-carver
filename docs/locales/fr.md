@@ -38,6 +38,7 @@ firm-carver (fcarver) est un utilitaire CLI et une bibliothèque en Rust pur pou
 4. **Deterministic Firmware Synthesis (`fcarver synth-fw`)** — Generates valid synthetic firmware blobs containing headers and filesystem streams for automated CI verification and vulnerability signature validation.
 5. **Entropy-Guided Bootloader & Kernel Boundary Slicer (`src/slicer/`)** — Computes sliding-window Shannon entropy profiles, detecting sharp inflection points between bootloaders, compressed kernels, and encrypted filesystems.
 6. **Cryptographic Integrity & Attestation Manifest Generator (`src/integrity/`)** — Computes SHA-256, SHA-512, and BLAKE3 digests across images and carved partitions, emitting and verifying tamper-evident integrity manifests.
+7. **Embedded Web Management & CGI Static Auditor (`src/cgi_audit/`)** — Audits carved `/www` directory trees and CGI scripts for command injection vulnerabilities (`system()`, `popen()`, unescaped `$QUERY_STRING`), unauthenticated administrative routes, backdoor cookies, hardcoded credentials, and path traversal flaws.
 
 </details>
 
@@ -113,7 +114,12 @@ cargo build --release
 ./target/release/fcarver integrity sample_uboot.bin --algo blake3
 ./target/release/fcarver integrity sample_uboot.bin --json
 
-# 10. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 10. Audit extracted web management interface and CGI scripts for vulnerabilities
+./target/release/fcarver cgi-audit ./extracted_fs/www
+./target/release/fcarver cgi-audit ./extracted_fs/www --min-severity high --json
+./target/release/fcarver cgi-audit ./extracted_fs/www --out cgi_report.json
+
+# 11. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -137,8 +143,9 @@ cargo build --release
 | `arch-detect` | `<file> [--offset <bytes>] [--length <bytes>] [--min-confidence <float>] [--disasm] [--json]` | Scores CPU architecture (MIPS/ARM/AArch64/RISC-V) and detects shellcode payloads |
 | `slice` | `<file> [--window <bytes>] [--step <bytes>] [--threshold <float>] [--plot] [--out <dir>] [--json]` | Computes sliding Shannon entropy, detects bootloader/kernel boundaries, slices partitions |
 | `integrity` | `<file> [--out <manifest.json>] [--verify <manifest.json>] [--algo <sha256|sha512|blake3|all>] [--json]` | Generates and verifies SHA-256, SHA-512, BLAKE3 digests and partition attestation manifests |
+| `cgi-audit` | `<target> [--out <file.json>] [--min-severity <level>] [--json]` | Audits web files and CGI scripts for command injection, auth bypass, and backdoors |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity>]` | Generates a valid synthetic firmware blob for testing/analysis |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
 
 
 </details>

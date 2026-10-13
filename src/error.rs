@@ -25,6 +25,8 @@ pub enum CarverError {
     Slicer(String),
     /// Cryptographic hash, digest, or integrity attestation error
     Integrity(String),
+    /// Embedded CGI and web management interface auditing error
+    CgiAudit(String),
 }
 
 impl fmt::Display for CarverError {
@@ -39,6 +41,7 @@ impl fmt::Display for CarverError {
             Self::Fdt(msg) => write!(f, "FDT/DTB error: {}", msg),
             Self::Slicer(msg) => write!(f, "Slicer error: {}", msg),
             Self::Integrity(msg) => write!(f, "Integrity attestation error: {}", msg),
+            Self::CgiAudit(msg) => write!(f, "CGI audit error: {}", msg),
         }
     }
 }

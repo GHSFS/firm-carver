@@ -6,6 +6,9 @@ use clap::Parser;
 use firm_carver::arch_detect::{
     build_synthetic_shellcode, format_arch_report, ArchDetector, Architecture, ShellcodeVariant,
 };
+use firm_carver::cgi_audit::{
+    audit_web_path, format_cgi_report, CgiAuditConfig, CgiSeverity, CgiSynth,
+};
 use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::{CarverError, Result};
 use firm_carver::fdt::{build_synthetic_fdt, FdtArchive};
@@ -92,10 +95,14 @@ fn run() -> Result<()> {
                                 "  Data Size:    {} bytes (0x{:X})",
                                 u.data_size, u.data_size
                             );
-                            println!("  Load Address: 0x{:08X}", u.load_address);
-                            println!("  Entry Point:  0x{:08X}", u.entry_point);
-                            println!("  OS / Arch:    OS {} / Arch {}", u.os_type, u.architecture);
-                            println!("  Compression:  Type {}", u.compression);
+                            println!(
+                                "  Load / Entry: 0x{:08X} / 0x{:08X}",
+                                u.load_address, u.entry_point
+                            );
+                            println!(
+                                "  OS / Arch:    OS {} / Arch {} (Compression: Type {})",
+                                u.os_type, u.architecture, u.compression
+                            );
                             println!(
                                 "  Header CRC:   0x{:08X} (Valid: {})",
                                 u.header_crc, u.header_crc_valid
@@ -109,9 +116,10 @@ fn run() -> Result<()> {
                                 "  Type:         Broadcom TRX Header (Magic \"{}\")",
                                 t.magic
                             );
-                            println!("  Total Length: {} bytes", t.total_length);
-                            println!("  Version:      {}", t.version);
-                            println!("  Flags:        0x{:04X}", t.flags);
+                            println!(
+                                "  Length / Ver: {} bytes / v{} (Flags: 0x{:04X})",
+                                t.total_length, t.version, t.flags
+                            );
                             println!(
                                 "  Offsets:      [0x{:X}, 0x{:X}, 0x{:X}]",
                                 t.offsets[0], t.offsets[1], t.offsets[2]
@@ -125,10 +133,11 @@ fn run() -> Result<()> {
                                 "  Type:         Device Tree Blob FDT (Magic 0x{:08X})",
                                 f.magic
                             );
-                            println!("  Total Size:   {} bytes", f.total_size);
-                            println!("  FDT Version:  {}", f.version);
-                            println!("  Struct Offset:0x{:08X}", f.off_dt_struct);
-                            println!("  Strings Offset:0x{:08X}", f.off_dt_strings);
+                            println!("  Size / Ver:   {} bytes / v{}", f.total_size, f.version);
+                            println!(
+                                "  Offsets:      struct 0x{:08X}, strings 0x{:08X}",
+                                f.off_dt_struct, f.off_dt_strings
+                            );
                         }
                     }
                     println!();
@@ -234,21 +243,25 @@ fn run() -> Result<()> {
             } else {
                 println!("=== FirmCarver SquashFS v4 Filesystem Inspector ===");
                 println!("Target Image:     {}", args.file.display());
-                println!("Filesystem Offset:0x{:08X}", start_offset);
-                println!("Endianness:       {:?}", archive.superblock.endianness);
                 println!(
-                    "Version:          v{}.{}",
-                    archive.superblock.version_major, archive.superblock.version_minor
+                    "Offset / Endian:  0x{:08X} / {:?}",
+                    start_offset, archive.superblock.endianness
                 );
                 println!(
-                    "Compression:      {}",
+                    "Version / Comp:   v{}.{} / {}",
+                    archive.superblock.version_major,
+                    archive.superblock.version_minor,
                     archive.superblock.compression.name()
                 );
-                println!("Block Size:       {} bytes", archive.superblock.block_size);
-                println!("Inodes Count:     {}", archive.superblock.inode_count);
-                println!("Bytes Used:       {} bytes", archive.superblock.bytes_used);
-                println!("Recovered Entries:{}", archive.entries.len());
-                println!();
+                println!(
+                    "Block / Inodes:   {} bytes / {} nodes",
+                    archive.superblock.block_size, archive.superblock.inode_count
+                );
+                println!(
+                    "Bytes Used / Rec: {} bytes / {} entries\n",
+                    archive.superblock.bytes_used,
+                    archive.entries.len()
+                );
                 println!("Sample Recovered Files & Directories:");
                 for e in archive.entries.iter().take(15) {
                     let suffix = match &e.symlink_target {
@@ -286,15 +299,16 @@ fn run() -> Result<()> {
                 print!("{}", archive.format_hardware_summary());
             } else {
                 println!("=== FirmCarver Device Tree Blob (FDT) Inspector ===");
-                println!("Target Image:     {}", args.file.display());
-                println!("FDT Offset:       0x{:08X}", start_offset);
-                println!("Total Size:       {} bytes", archive.header.totalsize);
-                println!("Version:          v{}", archive.header.version);
-                println!("Struct Offset:    0x{:08X}", archive.header.off_dt_struct);
-                println!("Strings Offset:   0x{:08X}", archive.header.off_dt_strings);
-                println!("Memreserve Offset:0x{:08X}", archive.header.off_mem_rsvmap);
-                println!("Reservations:     {}", archive.mem_rsvmap.len());
-                println!();
+                println!(
+                    "Target Image:     {} (offset 0x{:08X})",
+                    args.file.display(),
+                    start_offset
+                );
+                println!(
+                    "Total Size / Ver: {} bytes / v{}",
+                    archive.header.totalsize, archive.header.version
+                );
+                println!("Reservations:     {} entries\n", archive.mem_rsvmap.len());
                 print!("{}", archive.format_hardware_summary());
                 println!("\nHint: Run with --dts for full disassembler output or --json.");
             }
@@ -394,7 +408,42 @@ fn run() -> Result<()> {
             }
         }
 
+        Commands::CgiAudit(args) => {
+            let min_sev = args
+                .min_severity
+                .parse::<CgiSeverity>()
+                .map_err(CarverError::InvalidArgument)?;
+            let config = CgiAuditConfig {
+                min_severity: min_sev,
+                ..Default::default()
+            };
+            let report = audit_web_path(&args.target, &config)?;
+
+            if let Some(out_path) = &args.out {
+                let json_str = serde_json::to_string_pretty(&report)?;
+                fs::write(out_path, json_str).map_err(CarverError::Io)?;
+                if !args.json {
+                    println!("Wrote CGI audit report to: {}\n", out_path.display());
+                }
+            }
+
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                print!("{}", format_cgi_report(&report));
+            }
+        }
+
         Commands::SynthFw(args) => {
+            if args.fw_type == "cgi-tree" || args.fw_type == "cgi" || args.fw_type == "www" {
+                let created = CgiSynth::write_synthetic_web_tree_to_disk(&args.output)?;
+                println!("=== FirmCarver Synthetic Web Tree Generator ===");
+                println!("Destination:    {}", args.output.display());
+                println!("Files Created:  {}", created.len());
+                println!("Synthetic router /www management tree generated successfully.");
+                return Ok(());
+            }
+
             let synthetic_blob = match args.fw_type.as_str() {
                 "squashfs" => build_synthetic_squashfs(false),
                 "fdt" | "dtb" => build_synthetic_fdt(),
@@ -403,6 +452,7 @@ fn run() -> Result<()> {
                     let (blob, _) = build_synthetic_attested_firmware();
                     blob
                 }
+                "vuln-cgi" => CgiSynth::build_synthetic_firmware_with_cgi(),
                 "shellcode-mips" | "mips" => {
                     build_synthetic_shellcode(Architecture::MipsEb, ShellcodeVariant::ExecveSh)
                 }

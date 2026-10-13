@@ -35,6 +35,8 @@ pub enum Commands {
     Slice(SliceArgs),
     /// Generate or verify cryptographic hash digests (SHA-256, SHA-512, BLAKE3) and integrity attestations
     Integrity(IntegrityArgs),
+    /// Audit embedded /www directory tree or CGI scripts for command injection and unauthenticated routes
+    CgiAudit(CgiAuditArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -166,10 +168,25 @@ pub struct IntegrityArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct CgiAuditArgs {
+    /// Path to web directory (e.g. /www or /cgi-bin) or individual CGI script file
+    pub target: PathBuf,
+    /// Destination path to export JSON audit report
+    #[arg(short, long)]
+    pub out: Option<PathBuf>,
+    /// Minimum severity filter: critical, high, medium, low, info (default: low)
+    #[arg(short, long, default_value = "low")]
+    pub min_severity: String,
+    /// Output audit findings in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
-    /// Path to write synthetic firmware blob
+    /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }
