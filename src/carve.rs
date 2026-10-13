@@ -21,6 +21,8 @@ pub enum CarvedKind {
     Lzma,
     Xz,
     Jffs2,
+    Ubi,
+    Ubifs,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -257,6 +259,18 @@ pub fn scan_carvable_streams(data: &[u8]) -> Vec<CarvedSegment> {
             i += next_offset;
             continue;
         }
+        if let Some(ubi) = crate::ubifs::parse_ubi_segment_at(data, i) {
+            let next_offset = ubi.length.max(64);
+            segments.push(ubi);
+            i += next_offset;
+            continue;
+        }
+        if let Some(ubifs) = crate::ubifs::parse_ubifs_raw_segment_at(data, i) {
+            let next_offset = ubifs.length.max(24);
+            segments.push(ubifs);
+            i += next_offset;
+            continue;
+        }
         if let Some(xz) = parse_xz_at(data, i) {
             segments.push(xz);
             i += 12;
@@ -293,6 +307,8 @@ pub fn carve_and_extract(data: &[u8], out_dir: &Path, source_file: &str) -> Resu
             CarvedKind::Lzma => "lzma",
             CarvedKind::Xz => "xz",
             CarvedKind::Jffs2 => "jffs2",
+            CarvedKind::Ubi => "ubi",
+            CarvedKind::Ubifs => "ubifs",
         };
         let file_name = format!("carved_{:08x}_{}.{}", seg.offset, idx, ext);
         let dest_path = out_dir.join(&file_name);

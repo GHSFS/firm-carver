@@ -29,6 +29,8 @@ pub enum Commands {
     Squashfs(SquashfsArgs),
     /// Carve, parse, and reconstruct JFFS2 flash filesystem directory trees and nodes
     Jffs2(Jffs2Args),
+    /// Parse UBI volume headers, LEB mappings, and extract UBIFS directory trees and nodes
+    Ubifs(UbifsArgs),
     /// Disassemble Flattened Device Tree (FDT/DTB) and map peripheral hardware
     Fdt(FdtArgs),
     /// Detect CPU instruction set architecture and scan for shellcode payloads
@@ -101,6 +103,27 @@ pub struct Jffs2Args {
     #[arg(short, long)]
     pub extract: Option<PathBuf>,
     /// Output extracted filesystem metadata in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+    /// List detailed file tree with permissions, sizes, and timestamps
+    #[arg(short, long)]
+    pub list: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct UbifsArgs {
+    /// Path to firmware binary or extracted UBI/UBIFS flash dump
+    pub file: PathBuf,
+    /// Byte offset where UBI or UBIFS begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Physical Eraseblock (PEB) size in bytes for raw UBI scanning (default: auto-detect)
+    #[arg(short, long)]
+    pub peb_size: Option<usize>,
+    /// Destination directory to extract reconstructed files and directory tree
+    #[arg(short, long)]
+    pub extract: Option<PathBuf>,
+    /// Output extracted volume and filesystem metadata in structured JSON format
     #[arg(long)]
     pub json: bool,
     /// List detailed file tree with permissions, sizes, and timestamps

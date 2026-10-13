@@ -15,6 +15,7 @@ pub mod jffs2;
 pub mod slice;
 pub mod squashfs;
 pub mod synth_fw;
+pub mod ubifs;
 
 use firm_carver::cli::{Cli, Commands};
 use firm_carver::error::Result;
@@ -26,6 +27,7 @@ pub fn dispatch(cli: Cli) -> Result<()> {
         Commands::Audit(args) => audit::handle_audit(args),
         Commands::Squashfs(args) => squashfs::handle_squashfs(args),
         Commands::Jffs2(args) => jffs2::handle_jffs2(args),
+        Commands::Ubifs(args) => ubifs::handle_ubifs(args),
         Commands::Fdt(args) => fdt::handle_fdt(args),
         Commands::ArchDetect(args) => arch_detect::handle_arch_detect(args),
         Commands::Slice(args) => slice::handle_slice(args),

@@ -2,6 +2,27 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.10.0] - 2026-10-13
+
+### Added
+- **UBI & UBIFS Volume Header Parser & Filesystem Reconstructor (`src/ubifs/`)**:
+  - Implemented zero-dependency, pure-Rust UBI physical layer parser (`ubi.rs`, `types.rs`) decoding 64-byte Erase Counter headers (`UBI#` / `0x55424923`) and Volume Identifier headers (`UBI!` / `0x55424921`) with on-flash CRC32 validation.
+  - Implemented UBI Volume Table parser decoding 172-byte `struct ubi_vtbl_record` structures from the Layout Volume (`0x7FFFFFFF`), recovering user volume names, volume types (dynamic vs static), and reserved eraseblock counts.
+  - Added Physical Eraseblock (PEB) geometry auto-detection for NAND flash geometries (16 KiB, 64 KiB, 128 KiB, 256 KiB, 512 KiB, 2 MiB) with logical eraseblock (LEB) stream assembly.
+  - Implemented UBIFS on-flash node decoder (`node.rs`) parsing 24-byte `struct ubifs_ch` common headers, Superblock nodes (`UBIFS_SB_NODE` format v4/v5, LEB geometry, filesystem UUID, compression type), Master nodes (`UBIFS_MST_NODE`, commit sequence, space accounting, highest inum), Inode nodes (`UBIFS_INO_NODE`, UNIX permissions, UID/GID, file size, inline symlink targets), and Directory Entry nodes (`UBIFS_DENT_NODE`, B-tree parent key, inum, filename).
+  - Implemented directory tree reconstruction engine (`reconstruct.rs`) mapping parent-child inode graphs, generating formatted UNIX file listings (`drwxr-xr-x`, `lrwxrwxrwx`), symlink target resolution, and safe disk extraction with path traversal defenses rejecting relative path breakouts (`/../../`).
+  - Implemented continuous flash partition carver (`carver.rs`) discovering embedded UBI and UBIFS partition streams within raw firmware dumps, integrated into the core carving engine under `CarvedKind::Ubi` and `CarvedKind::Ubifs`.
+- **Dedicated CLI Subcommand `ubifs` (`src/cli.rs`, `src/commands/ubifs.rs`)**:
+  - `fcarver ubifs <file>`: inspects UBI volume geometry, volume table records, UBIFS superblock parameters, and recovered file tree summaries.
+  - `fcarver ubifs <file> --list`: displays full UNIX `ls -la` table of recovered directories, regular files, and symlinks.
+  - `fcarver ubifs <file> --extract <dir>`: extracts reconstructed files and directory trees to disk with strict path traversal defenses.
+  - `fcarver ubifs <file> --offset <bytes>`: parses UBI or UBIFS partition located at explicit byte offset.
+  - `fcarver ubifs <file> --peb-size <bytes>`: specifies custom PEB eraseblock size for non-standard NAND architectures.
+  - `fcarver ubifs <file> --json`: outputs structured JSON archive metadata to stdout.
+- **Deterministic Synthetic UBI & UBIFS Fixtures (`src/ubifs/synth.rs`)**:
+  - Added deterministic fixture generators producing little-endian (`synth-fw -t ubi`, `synth-fw -t ubifs`) and big-endian (`synth-fw -t ubi-be`, `synth-fw -t ubifs-be`) images with valid IEEE 802.3 CRC32 checksums across EC, VID, VTBL, and UBIFS node headers.
+  - Added dedicated integration test suite (`tests/ubifs_test.rs`) with 11 tests covering EC/VID header parsing, volume table decoding, LEB stream assembly, UBIFS superblock and master node decoding, directory tree recovery, UNIX permission formatting, symlink resolution, path traversal defenses, disk extraction, stream carving, and corrupted input resilience.
+
 ## [0.9.0] - 2026-10-13
 
 ### Added

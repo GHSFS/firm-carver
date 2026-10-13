@@ -14,6 +14,7 @@ pub mod integrity;
 pub mod jffs2;
 pub mod slicer;
 pub mod squashfs;
+pub mod ubifs;
 pub mod vuln_scan;
 
 pub use arch_detect::{
@@ -61,6 +62,12 @@ pub use slicer::{
     SliceBoundary, SlicedPartition, SlicerConfig, SlicerReport,
 };
 pub use squashfs::{build_synthetic_squashfs, SquashFsArchive, SquashFsEntry, SquashFsSuperblock};
+pub use ubifs::{
+    build_synthetic_ubi, build_synthetic_ubifs, scan_ubi_partitions, EraseCounterHeader, UbiImage,
+    UbiPartitionSpan, UbiVolumeInfo, UbiVolumeType, UbifsArchive, UbifsDent, UbifsEntry,
+    UbifsFileType, UbifsInode, UbifsMasterNode, UbifsNodeType, UbifsSuperblock,
+    UBIFS_NODE_MAGIC_LE, UBI_EC_HDR_MAGIC, UBI_LAYOUT_VOLUME_ID, UBI_VID_HDR_MAGIC,
+};
 pub use vuln_scan::{
     scan_vulnerabilities, VulnAuditReport, VulnCategory, VulnFinding, VulnSeverity,
 };

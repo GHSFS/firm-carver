@@ -34,6 +34,14 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
     }
 
     let synthetic_blob = match args.fw_type.as_str() {
+        "ubi" => firm_carver::ubifs::build_synthetic_ubi(firm_carver::ubifs::Endianness::Little),
+        "ubi-be" => firm_carver::ubifs::build_synthetic_ubi(firm_carver::ubifs::Endianness::Big),
+        "ubifs" => {
+            firm_carver::ubifs::build_synthetic_ubifs(firm_carver::ubifs::Endianness::Little)
+        }
+        "ubifs-be" => {
+            firm_carver::ubifs::build_synthetic_ubifs(firm_carver::ubifs::Endianness::Big)
+        }
         "jffs2" => firm_carver::jffs2::build_synthetic_jffs2(false),
         "jffs2-be" => firm_carver::jffs2::build_synthetic_jffs2(true),
         "cert-blob" => CertSynth::build_synthetic_firmware_cert_blob(),

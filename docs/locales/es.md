@@ -41,6 +41,7 @@ firm-carver (fcarver) es una herramienta CLI y biblioteca en Rust puro para el a
 7. **Embedded Web Management & CGI Static Auditor (`src/cgi_audit/`)** — Audits carved `/www` directory trees and CGI scripts for command injection vulnerabilities (`system()`, `popen()`, unescaped `$QUERY_STRING`), unauthenticated administrative routes, backdoor cookies, hardcoded credentials, and path traversal flaws.
 8. **Hardcoded TLS Certificate & Expired Root CA Scanner (`src/cert_audit/`)** — Zero-dependency pure-Rust ASN.1 DER parser and RFC 4648 Base64 PEM decoder for X.509 certificates and PKCS#1/PKCS#8 private keys, checking expiration, weak signatures (MD5/SHA1), weak RSA keys (<2048), self-signed certs, and paired private keys.
 9. **JFFS2 Flash Filesystem Carver & Node Reconstructor (`src/jffs2/`)** — Pure-Rust JFFS2 flash filesystem parser and carver for NOR/NAND partitions supporting Little-Endian (`0x85 0x19`) and Big-Endian (`0x19 0x85`), RTIME and Zlib decompression with bounds-checked CVE-2024-57850 hardening, tombstone resolution, and filesystem extraction.
+10. **UBI & UBIFS Volume Header Parser & Filesystem Reconstructor (`src/ubifs/`)** — Zero-dependency pure-Rust UBI physical erase block (PEB) parser, VID header decoder, layout volume table reader, and UBIFS superblock, master node, and directory tree extractor for NAND router flash dumps.
 
 </details>
 
@@ -126,12 +127,17 @@ cargo build --release
 ./target/release/fcarver jffs2 sample_jffs2.bin --extract ./extracted_jffs2
 ./target/release/fcarver jffs2 sample_jffs2.bin --json
 
-# 12. Audit hardcoded TLS certificates, expired root CAs, and leaked private keys
+# 12. Parse UBI volumes, layout tables, and extract UBIFS directory trees
+./target/release/fcarver ubifs sample_ubi.bin --list
+./target/release/fcarver ubifs sample_ubi.bin --extract ./extracted_ubifs
+./target/release/fcarver ubifs sample_ubi.bin --json
+
+# 13. Audit hardcoded TLS certificates, expired root CAs, and leaked private keys
 ./target/release/fcarver cert-audit sample_uboot.bin
 ./target/release/fcarver cert-audit sample_uboot.bin --min-severity high --json
 ./target/release/fcarver cert-audit ./extracted_fs/etc/ssl --out cert_report.json
 
-# 13. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 14. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -149,9 +155,10 @@ cargo build --release
 | Subcommand | Arguments | Description |
 |---|---|---|
 | `inspect` | `<file> [--json]` | Identifies container headers: U-Boot, TRX, FDT, architecture, offsets |
-| `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, JFFS2, Gzip, LZMA partitions to disk |
+| `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, JFFS2, UBI, Gzip, LZMA partitions to disk |
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
 | `jffs2` | `<file> [--list] [--extract <dir>] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from JFFS2 flash |
+| `ubifs` | `<file> [--list] [--extract <dir>] [--peb-size <bytes>] [--json] [--offset <bytes>]` | Parses UBI volume headers, LEB mappings, and extracts UBIFS directory trees |
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
 | `arch-detect` | `<file> [--offset <bytes>] [--length <bytes>] [--min-confidence <float>] [--disasm] [--json]` | Scores CPU architecture (MIPS/ARM/AArch64/RISC-V) and detects shellcode payloads |
 | `slice` | `<file> [--window <bytes>] [--step <bytes>] [--threshold <float>] [--plot] [--out <dir>] [--json]` | Computes sliding Shannon entropy, detects bootloader/kernel boundaries, slices partitions |
@@ -159,7 +166,7 @@ cargo build --release
 | `cgi-audit` | `<target> [--out <file.json>] [--min-severity <level>] [--json]` | Audits web files and CGI scripts for command injection, auth bypass, and backdoors |
 | `cert-audit` | `<target> [--min-severity <level>] [--reference-date <date>] [--out <file.json>] [--json]` | Audits X.509 certificates and private keys for expiry, weak crypto, and leaks |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|jffs2|jffs2-be|cert-store|cert-blob|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
 
 </details>
 

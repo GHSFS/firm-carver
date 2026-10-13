@@ -31,6 +31,8 @@ pub enum CarverError {
     CertAudit(String),
     /// JFFS2 flash filesystem parsing, carving, or decompression error
     Jffs2(String),
+    /// UBI and UBIFS volume header parsing, LEB mapping, or node recovery error
+    Ubifs(String),
 }
 
 impl fmt::Display for CarverError {
@@ -48,6 +50,7 @@ impl fmt::Display for CarverError {
             Self::CgiAudit(msg) => write!(f, "CGI audit error: {}", msg),
             Self::CertAudit(msg) => write!(f, "Certificate audit error: {}", msg),
             Self::Jffs2(msg) => write!(f, "JFFS2 error: {}", msg),
+            Self::Ubifs(msg) => write!(f, "UBI/UBIFS error: {}", msg),
         }
     }
 }
