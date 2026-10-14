@@ -45,6 +45,8 @@ pub enum Commands {
     CertAudit(CertAuditArgs),
     /// Extract, carve, and audit Broadcom and MediaTek NVRAM tables and parameters
     Nvram(NvramArgs),
+    /// Audit firmware or directories for embedded URLs, IPv4/IPv6 endpoints, and telemetry domains
+    DomainAudit(DomainAuditArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -272,10 +274,37 @@ pub struct NvramArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct DomainAuditArgs {
+    /// Path to firmware binary, extracted filesystem directory, or configuration file
+    pub target: PathBuf,
+    /// Byte offset where analysis begins in binary mode (default: 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Minimum severity filter: critical, high, medium, low, info (default: low)
+    #[arg(short, long, default_value = "low")]
+    pub min_severity: String,
+    /// Filter endpoint kind: url, ipv4, ipv6, domain, all (default: all)
+    #[arg(short, long, default_value = "all")]
+    pub filter: String,
+    /// Minimum printable string length when scanning binary blobs (default: 4)
+    #[arg(long, default_value_t = 4)]
+    pub min_len: usize,
+    /// Exclude RFC 1918 private IP addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+    #[arg(long)]
+    pub no_private: bool,
+    /// Destination path to export JSON audit report
+    #[arg(short, long)]
+    pub out: Option<PathBuf>,
+    /// Output audit findings in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat, domain-vuln, domain-hardened (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

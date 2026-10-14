@@ -2,6 +2,44 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.12.0] - 2026-10-14
+
+### Added
+- **Hardcoded IPv4/IPv6 & External Telemetry Domain Classifier (`src/domain_audit/`)**:
+  - Implemented standalone zero-dependency network endpoint extractor and domain auditor (`extractor.rs`, `types.rs`) extracting URLs, IPv4/IPv6 addresses, and hostnames from binary firmware dumps, raw flash partitions, and filesystem trees.
+  - Implemented comprehensive URI parser supporting `http://`, `https://`, `ftp://`, `tftp://`, `telnet://`, `ws://`, `wss://`, `mqtt://`, and `mqtts://` schemes with port, path, query parameters, and embedded basic authentication credentials extraction.
+  - Implemented RFC-compliant IP address scope classifier (`classifier.rs`):
+    - IPv4 scope categorization: Public routable, Private (RFC 1918 `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), Loopback (`127.0.0.0/8`), Link-Local (`169.254.0.0/16`), Carrier-Grade NAT (RFC 6598 `100.64.0.0/10`), Documentation (RFC 5737 `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`), Multicast (`224.0.0.0/4`), Broadcast (`255.255.255.255`), and Unspecified (`0.0.0.0`).
+    - IPv6 scope categorization: Global Unicast, Unique Local (RFC 4193 ULA `fc00::/7`), Link-Local (`fe80::/10`), Loopback (`::1`), Documentation (RFC 3849 `2001:db8::/32`), Multicast (`ff00::/8`), and Unspecified (`::`).
+  - Implemented functional domain classification engine (`classifier.rs`):
+    - Telemetry and Analytics backend detection (Crashlytics, Sentry, Datadog, Segment, Mixpanel, Firebase, Umeng, tracking endpoints).
+    - Firmware Update / OTA distribution server detection (`update.*`, `firmware.*`, `download.*`, `upgrade.*`, `ota.*`).
+    - Dynamic DNS (DDNS) provider categorization (DynDNS, No-IP, DDNS.net, DuckDNS, FreeDNS, ChangeIP, Asuscomm, D-Link DDNS).
+    - Public Cloud & CDN infrastructure recognition (AWS, Azure, Cloudflare, CloudFront, Aliyun).
+    - Network Time Protocol (NTP) pool server categorization (`pool.ntp.org`, `time.nist.gov`, `time.windows.com`, `time.google.com`).
+    - Local network domain classification (`.local`, `.lan`, `.home`, `.internal`, `.corp`, `localhost`).
+  - Implemented security auditing rule engine (`rules.rs`):
+    - **`NET-CLEAR-001` (Critical)**: Insecure cleartext HTTP firmware update or OTA URL susceptible to Man-in-the-Middle (MitM) image tampering and malicious flashing.
+    - **`NET-CLEAR-002` (Medium)**: Insecure cleartext HTTP communication with remote external APIs or reporting endpoints.
+    - **`NET-HARDIP-001` (Medium / Low)**: Static public routable IP addresses hardcoded in firmware, risking hijacking upon IP reallocation and bypassing DNS failover.
+    - **`NET-DDNS-001` (High)**: Hardcoded Dynamic DNS provider domains indicating diagnostic backdoors or ephemeral staging servers.
+    - **`NET-INSEC-001` (High)**: Deprecated insecure plaintext transport protocols (`telnet://`, `ftp://`, `tftp://`).
+    - **`NET-AUTH-001` (Critical)**: Embedded plaintext user credentials in URI authority blocks (`user:pass@host`).
+    - **`NET-TELEM-001` (Info)**: External telemetry and behavioral tracking services.
+  - Implemented recursive directory scanner (`scanner.rs`) with symlink loop guards, single-file text/binary analysis, and raw byte buffer carving with byte offset tracking.
+  - Implemented memory zeroing (`Zeroize` & `Drop`) for sensitive discovered endpoints, credentials, and buffer slices.
+- **Dedicated CLI Subcommand `domain-audit` (`src/cli.rs`, `src/commands/domain_audit.rs`)**:
+  - `fcarver domain-audit <target>`: audits firmware binaries, script files, or extracted directories for network endpoints.
+  - `fcarver domain-audit <target> --min-severity <critical|high|medium|low|info>`: filters findings by minimum severity threshold.
+  - `fcarver domain-audit <target> --filter <url|ipv4|ipv6|domain|all>`: restricts analysis to specific endpoint types.
+  - `fcarver domain-audit <target> --no-private`: suppresses RFC 1918 private and loopback addresses.
+  - `fcarver domain-audit <target> --out <file.json>`: exports complete structured JSON audit report.
+  - `fcarver domain-audit <target> --offset <bytes>`: analyzes firmware binary slice starting from byte offset.
+  - `fcarver domain-audit <target> --json`: emits structured JSON to stdout.
+- **Deterministic Synthetic Domain Fixtures (`src/domain_audit/synth.rs`, `src/commands/synth_fw.rs`)**:
+  - Added deterministic fixture generators producing vulnerable firmware blobs (`synth-fw -t domain-vuln`) and hardened builds (`synth-fw -t domain-hardened`).
+  - Added dedicated integration test suite (`tests/domain_audit_test.rs`) with 13 tests covering IPv4/IPv6 classification, URL parsing, cleartext OTA/API detection, hardcoded public IPs, DDNS detection, legacy protocols, URI credentials, telemetry categorization, stream carving, hardened firmware validation, and directory tree scanning.
+
 ## [0.11.0] - 2026-10-14
 
 ### Added

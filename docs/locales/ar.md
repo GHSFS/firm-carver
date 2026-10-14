@@ -137,7 +137,17 @@ cargo build --release
 ./target/release/fcarver cert-audit sample_uboot.bin --min-severity high --json
 ./target/release/fcarver cert-audit ./extracted_fs/etc/ssl --out cert_report.json
 
-# 14. Audit firmware blob for embedded private keys, default credentials, and backdoors
+# 14. Extract, carve, and audit Broadcom and MediaTek NVRAM tables and parameters
+./target/release/fcarver nvram sample_nvram.bin --list
+./target/release/fcarver nvram sample_nvram.bin --audit
+./target/release/fcarver nvram sample_nvram.bin --extract ./nvram.env
+
+# 15. Audit embedded network endpoints, cleartext HTTP OTAs, and telemetry domains
+./target/release/fcarver domain-audit sample_uboot.bin
+./target/release/fcarver domain-audit sample_uboot.bin --min-severity medium --json
+./target/release/fcarver domain-audit ./extracted_fs --out domain_report.json
+
+# 16. Audit firmware blob for embedded private keys, default credentials, and backdoors
 ./target/release/fcarver audit sample_uboot.bin
 ./target/release/fcarver audit sample_uboot.bin --json
 ```
@@ -165,8 +175,10 @@ cargo build --release
 | `integrity` | `<file> [--out <manifest.json>] [--verify <manifest.json>] [--algo <sha256|sha512|blake3|all>] [--json]` | Generates and verifies SHA-256, SHA-512, BLAKE3 digests and partition attestation manifests |
 | `cgi-audit` | `<target> [--out <file.json>] [--min-severity <level>] [--json]` | Audits web files and CGI scripts for command injection, auth bypass, and backdoors |
 | `cert-audit` | `<target> [--min-severity <level>] [--reference-date <date>] [--out <file.json>] [--json]` | Audits X.509 certificates and private keys for expiry, weak crypto, and leaks |
+| `nvram` | `<file> [--list] [--audit] [--extract <file.env>] [--format <auto|bcm|mtk>] [--json]` | Extracts, carves, and audits Broadcom and MediaTek NVRAM configuration tables |
+| `domain-audit` | `<target> [--min-severity <level>] [--filter <kind>] [--no-private] [--out <file.json>] [--json]` | Extracts and audits URLs, IPv4/IPv6 endpoints, and telemetry domains |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|nvram-bcm|nvram-mtk|nvram-dat|domain-vuln|domain-hardened|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
 
 </details>
 

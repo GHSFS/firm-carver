@@ -8,6 +8,7 @@ pub mod carve;
 pub mod cert_audit;
 pub mod cgi_audit;
 pub mod common;
+pub mod domain_audit;
 pub mod fdt;
 pub mod inspect;
 pub mod integrity;
@@ -36,6 +37,7 @@ pub fn dispatch(cli: Cli) -> Result<()> {
         Commands::CgiAudit(args) => cgi_audit::handle_cgi_audit(args),
         Commands::CertAudit(args) => cert_audit::handle_cert_audit(args),
         Commands::Nvram(args) => nvram::handle_nvram(args),
+        Commands::DomainAudit(args) => domain_audit::handle_domain_audit(args),
         Commands::SynthFw(args) => synth_fw::handle_synth_fw(args),
     }
 }

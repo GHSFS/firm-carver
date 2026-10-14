@@ -68,6 +68,12 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
             let (blob, _) = build_synthetic_attested_firmware();
             blob
         }
+        "domain-vuln" => {
+            firm_carver::domain_audit::DomainSynth::build_synthetic_vulnerable_buffer()
+        }
+        "domain-hardened" => {
+            firm_carver::domain_audit::DomainSynth::build_synthetic_hardened_buffer()
+        }
         "vuln-cgi" => CgiSynth::build_synthetic_firmware_with_cgi(),
         "shellcode-mips" | "mips" => {
             build_synthetic_shellcode(Architecture::MipsEb, ShellcodeVariant::ExecveSh)

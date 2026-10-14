@@ -7,6 +7,7 @@ pub mod carve;
 pub mod cert_audit;
 pub mod cgi_audit;
 pub mod cli;
+pub mod domain_audit;
 pub mod error;
 pub mod fdt;
 pub mod image;
@@ -34,6 +35,12 @@ pub use cert_audit::{
 pub use cgi_audit::{
     audit_web_path, format_cgi_report, CgiAuditConfig, CgiAuditReport, CgiFinding, CgiRuleEngine,
     CgiScanner, CgiSeverity, CgiSynth, CgiVulnCategory,
+};
+pub use domain_audit::{
+    audit_domain_buffer, audit_domain_path, format_domain_report, DomainAuditConfig,
+    DomainAuditReport, DomainAuditSummary, DomainCategory, DomainIssueCode, DomainRuleEngine,
+    DomainScanner, DomainSecurityIssue, DomainSeverity, DomainSynth, EndpointFinding, EndpointKind,
+    IpScope, UrlScheme,
 };
 pub use error::{CarverError, Result};
 pub use fdt::{

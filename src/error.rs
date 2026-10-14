@@ -35,6 +35,8 @@ pub enum CarverError {
     Ubifs(String),
     /// Broadcom and MediaTek NVRAM table parsing, carving, or security auditing error
     Nvram(String),
+    /// Hardcoded network endpoint and telemetry domain auditing error
+    DomainAudit(String),
 }
 
 impl fmt::Display for CarverError {
@@ -54,6 +56,7 @@ impl fmt::Display for CarverError {
             Self::Jffs2(msg) => write!(f, "JFFS2 error: {}", msg),
             Self::Ubifs(msg) => write!(f, "UBI/UBIFS error: {}", msg),
             Self::Nvram(msg) => write!(f, "NVRAM error: {}", msg),
+            Self::DomainAudit(msg) => write!(f, "Domain audit error: {}", msg),
         }
     }
 }
