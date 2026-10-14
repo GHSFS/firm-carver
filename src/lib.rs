@@ -12,6 +12,7 @@ pub mod fdt;
 pub mod image;
 pub mod integrity;
 pub mod jffs2;
+pub mod nvram;
 pub mod slicer;
 pub mod squashfs;
 pub mod ubifs;
@@ -54,6 +55,20 @@ pub use jffs2::{
     build_synthetic_jffs2, extract_archive_to_disk, format_mode_string, scan_jffs2_partitions,
     CommonNodeHeader, Endianness, Jffs2Archive, Jffs2Entry, Jffs2FileType, Jffs2PartitionSpan,
     RawDirent, RawInode,
+};
+pub use nvram::{
+    build_synthetic_broadcom_flsh, build_synthetic_hardened_nvram, build_synthetic_mediatek_dat,
+    build_synthetic_mediatek_eeprom, build_synthetic_mt7620_factory,
+    build_synthetic_mtk7628_factory, build_synthetic_packed_strings,
+    build_synthetic_rt2880_factory, build_synthetic_vulnerable_nvram, compute_bcm_checksum8,
+    compute_bcm_crc8, format_mac, parse_broadcom_flsh, parse_mediatek_dat, parse_mediatek_eeprom,
+    parse_null_delimited_entries, parse_nvram_segment_at, probe_mediatek_dat, probe_nvram_at,
+    scan_nvram_partitions, scan_packed_strings_tables, verify_wps_pin_checksum,
+    BroadcomNvramHeader, MediaTekEepromHeader, NvramArchive, NvramAuditReport, NvramCategory,
+    NvramEntry, NvramPartitionSpan, NvramRuleEngine, NvramSecurityIssue, NvramSeverity,
+    NvramSourceKind, NvramSummary, BCM_NVRAM_HEADER_LEN, BCM_NVRAM_MAGIC_BE, BCM_NVRAM_MAGIC_LE,
+    MTK_CHIP_MT7603, MTK_CHIP_MT7612, MTK_CHIP_MT7615, MTK_CHIP_MT7620, MTK_CHIP_MT7621,
+    MTK_CHIP_MT7628, MTK_CHIP_MT7915, MTK_CHIP_RT2880, MTK_CHIP_RT3052, MTK_CHIP_RT3883,
 };
 pub use slicer::{
     analyze_and_slice, build_synthetic_sliced_firmware, compute_entropy_profile, detect_boundaries,

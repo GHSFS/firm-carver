@@ -44,6 +44,22 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
         }
         "jffs2" => firm_carver::jffs2::build_synthetic_jffs2(false),
         "jffs2-be" => firm_carver::jffs2::build_synthetic_jffs2(true),
+        "nvram-bcm" | "nvram-flsh" => {
+            let (blob, _) = firm_carver::nvram::build_synthetic_vulnerable_nvram();
+            blob
+        }
+        "nvram-mtk" | "nvram-eeprom" => firm_carver::nvram::build_synthetic_mtk7628_factory(),
+        "nvram-dat" => {
+            let entries = [
+                ("SSID1", "MediaTek_AP"),
+                ("WPAPSK1", "12345678"),
+                ("AuthMode", "WPA2PSK"),
+                ("EncrypType", "AES"),
+                ("CountryCode", "US"),
+                ("BssidNum", "1"),
+            ];
+            firm_carver::nvram::build_synthetic_mediatek_dat(&entries)
+        }
         "cert-blob" => CertSynth::build_synthetic_firmware_cert_blob(),
         "squashfs" => build_synthetic_squashfs(false),
         "fdt" | "dtb" => build_synthetic_fdt(),

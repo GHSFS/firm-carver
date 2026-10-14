@@ -43,6 +43,8 @@ pub enum Commands {
     CgiAudit(CgiAuditArgs),
     /// Audit TLS certificates, root CA stores, weak signature algos, and leaked private keys
     CertAudit(CertAuditArgs),
+    /// Extract, carve, and audit Broadcom and MediaTek NVRAM tables and parameters
+    Nvram(NvramArgs),
     /// Generate a deterministic synthetic firmware blob for testing and analysis
     SynthFw(SynthFwArgs),
 }
@@ -246,10 +248,34 @@ pub struct CertAuditArgs {
 }
 
 #[derive(Args, Debug)]
+pub struct NvramArgs {
+    /// Path to firmware binary or extracted NVRAM partition dump
+    pub file: PathBuf,
+    /// Byte offset where NVRAM begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Format filter: auto, broadcom, bcm-flsh, bcm-packed, mediatek, mtk-dat, mtk-eeprom (default: auto)
+    #[arg(short = 'f', long = "format", default_value = "auto")]
+    pub format: String,
+    /// Destination path to export extracted parameters as .env file
+    #[arg(short, long)]
+    pub extract: Option<PathBuf>,
+    /// Run security posture audit on extracted NVRAM parameters
+    #[arg(short, long)]
+    pub audit: bool,
+    /// Output results in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+    /// List all extracted key-value pairs
+    #[arg(short, long)]
+    pub list: bool,
+}
+
+#[derive(Args, Debug)]
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

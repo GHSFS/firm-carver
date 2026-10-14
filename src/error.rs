@@ -33,6 +33,8 @@ pub enum CarverError {
     Jffs2(String),
     /// UBI and UBIFS volume header parsing, LEB mapping, or node recovery error
     Ubifs(String),
+    /// Broadcom and MediaTek NVRAM table parsing, carving, or security auditing error
+    Nvram(String),
 }
 
 impl fmt::Display for CarverError {
@@ -51,6 +53,7 @@ impl fmt::Display for CarverError {
             Self::CertAudit(msg) => write!(f, "Certificate audit error: {}", msg),
             Self::Jffs2(msg) => write!(f, "JFFS2 error: {}", msg),
             Self::Ubifs(msg) => write!(f, "UBI/UBIFS error: {}", msg),
+            Self::Nvram(msg) => write!(f, "NVRAM error: {}", msg),
         }
     }
 }

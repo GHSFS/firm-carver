@@ -12,6 +12,7 @@ pub mod fdt;
 pub mod inspect;
 pub mod integrity;
 pub mod jffs2;
+pub mod nvram;
 pub mod slice;
 pub mod squashfs;
 pub mod synth_fw;
@@ -34,6 +35,7 @@ pub fn dispatch(cli: Cli) -> Result<()> {
         Commands::Integrity(args) => integrity::handle_integrity(args),
         Commands::CgiAudit(args) => cgi_audit::handle_cgi_audit(args),
         Commands::CertAudit(args) => cert_audit::handle_cert_audit(args),
+        Commands::Nvram(args) => nvram::handle_nvram(args),
         Commands::SynthFw(args) => synth_fw::handle_synth_fw(args),
     }
 }

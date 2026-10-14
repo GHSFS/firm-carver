@@ -2,7 +2,37 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
-## [0.10.0] - 2026-10-13
+## [0.11.0] - 2026-10-14
+
+### Added
+- **Broadcom & MediaTek NVRAM Default Table Extractor (`src/nvram/`)**:
+  - Implemented standalone zero-dependency parser for Broadcom flash NVRAM headers (`FLSH` / `0x48534C46` Little-Endian and `0x464C5348` Big-Endian) (`broadcom.rs`, `types.rs`) verifying header magic, length bounds, and 8-bit additive checksums.
+  - Implemented null-delimited key-value string extractor recovering standard `key=value\0` pairs with double-null (`\0\0`) block termination.
+  - Implemented contiguous packed strings table scanner (`scan_packed_strings_tables`) discovering compiled static NVRAM default tables in embedded `.rodata` sections, C binaries, and raw bootloader dumps (minimum 3 valid key-value pairs).
+  - Implemented MediaTek and Ralink `.dat` line-delimited configuration file parser (`mediatek.rs`) parsing `Key=Value` records across `\r\n` and `\n` line endings, recognizing standard MediaTek directives (`Default`, `SSID1`, `WPAPSK1`, `CountryCode`, `BssidNum`, `AuthMode`, `EncrypType`).
+  - Implemented MediaTek Factory / EEPROM flash partition decoder (`parse_mediatek_eeprom`) reading SoC chip identifiers (MT7620, MT7628, MT7621, RT2880, MT7603, MT7612, MT7615, MT7915), primary LAN and WAN MAC addresses, NIC configuration flags, country region codes, and RF transmit power calibration tables.
+  - Implemented comprehensive NVRAM security auditing rule engine (`rules.rs`):
+    - **`NVRAM-WIFI-001` (Critical / High)**: Weak or default Wi-Fi preshared keys (`12345678`, `password`, `admin`, `00000000`, empty strings, predictable sequences).
+    - **`NVRAM-WIFI-002` (Medium)**: Insecure open wireless networks (`AuthMode=OPEN`) and deprecated WEP encryption configurations.
+    - **`NVRAM-WPS-001` (High)**: Default or static WPS device PINs (`12345670`, `00000000`, 8-digit PINs) with standard WPS checksum algorithm validation.
+    - **`NVRAM-CRED-001` (Critical)**: Default web management administrative credentials (`http_username`, `http_passwd`, `admin_password` = `admin`, `root`, `password`).
+    - **`NVRAM-FLAG-001` (Critical / High)**: Insecure diagnostic backdoors and exposed debug flags (`telnetd_enable=1`, `enable_telnet=1`, `factory_mode=1`, `boot_wait=on`, `debug_enable=1`, `console_enable=1`).
+    - **`NVRAM-SVC-001` (High)**: Insecure remote management services (`remote_management=1`), unencrypted TR-069 management URLs (`cwmp_acs_url=http://`), and cleartext WAN PPPoE/DDNS credentials.
+  - Implemented continuous flash stream carver (`carver.rs`) discovering embedded Broadcom `FLSH` headers and packed NVRAM parameter blocks in raw flash images, integrated with `CarvedKind::Nvram`.
+  - Implemented safe `.env` file export (`extract_to_env_file`) with quotation escaping and strict key whitelisting against shell variable injection.
+  - Implemented memory wiping (`Zeroize`) for parsed NVRAM entries, sensitive credential values, MAC addresses, and raw firmware buffers.
+- **Dedicated CLI Subcommand `nvram` (`src/cli.rs`, `src/commands/nvram.rs`)**:
+  - `fcarver nvram <file>`: inspects NVRAM headers, detected chip model, total keys, and sensitive parameter summary.
+  - `fcarver nvram <file> --list`: displays full tabular listing of recovered key-value pairs and sensitivity tags.
+  - `fcarver nvram <file> --audit`: evaluates all security rules and outputs a formatted vulnerability table with remediation advice.
+  - `fcarver nvram <file> --extract <path.env>`: exports sanitized key-value parameters to a `.env` configuration file.
+  - `fcarver nvram <file> --offset <bytes>`: parses NVRAM partition located at explicit byte offset.
+  - `fcarver nvram <file> --format <broadcom|mediatek-dat|mediatek-eeprom|packed>`: forces specific NVRAM parser dialect.
+  - `fcarver nvram <file> --json`: outputs structured JSON archive and security audit metadata to stdout.
+- **Deterministic Synthetic NVRAM Fixtures (`src/nvram/synth.rs`, `src/commands/synth_fw.rs`)**:
+  - Added synthetic fixture generators creating Broadcom FLSH (`synth-fw -t nvram-bcm`), MediaTek EEPROM (`synth-fw -t nvram-mtk`), and MediaTek `.dat` (`synth-fw -t nvram-dat`) images.
+  - Added dedicated integration test suite (`tests/nvram_audit_test.rs`) with 11 tests covering Broadcom FLSH LE/BE, packed strings, MediaTek .dat, MediaTek EEPROM, security audit rules, hardened audit pass, WPS PIN checksum, raw flash partition carving, zeroize memory safety, corrupted input resilience, JSON serialization, and `.env` export.
+
 
 ### Added
 - **UBI & UBIFS Volume Header Parser & Filesystem Reconstructor (`src/ubifs/`)**:
