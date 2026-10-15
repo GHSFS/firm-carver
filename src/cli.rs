@@ -27,6 +27,8 @@ pub enum Commands {
     Audit(AuditArgs),
     /// Extract directory tree and inode metadata from SquashFS v4 filesystems
     Squashfs(SquashfsArgs),
+    /// Parse, walk directory trees, resolve symlinks, and audit CramFS compressed filesystems
+    Cramfs(CramfsArgs),
     /// Carve, parse, and reconstruct JFFS2 flash filesystem directory trees and nodes
     Jffs2(Jffs2Args),
     /// Parse UBI volume headers, LEB mappings, and extract UBIFS directory trees and nodes
@@ -92,6 +94,27 @@ pub struct SquashfsArgs {
     #[arg(long)]
     pub json: bool,
     /// List detailed file tree with permissions, sizes, and timestamps
+    #[arg(short, long)]
+    pub list: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct CramfsArgs {
+    /// Path to firmware binary or extracted CramFS image
+    pub file: PathBuf,
+    /// Byte offset where CramFS filesystem begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Destination directory to safely extract recovered files and symlinks
+    #[arg(short, long)]
+    pub extract: Option<PathBuf>,
+    /// Run security posture audit on directory records and symlinks
+    #[arg(short, long)]
+    pub audit: bool,
+    /// Output extracted filesystem metadata in structured JSON format
+    #[arg(long)]
+    pub json: bool,
+    /// List detailed file tree with permissions, sizes, and symlink targets
     #[arg(short, long)]
     pub list: bool,
 }
@@ -304,7 +327,7 @@ pub struct DomainAuditArgs {
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat, domain-vuln, domain-hardened (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, cramfs, cramfs-be, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat, domain-vuln, domain-hardened (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

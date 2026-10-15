@@ -8,6 +8,7 @@ pub mod carve;
 pub mod cert_audit;
 pub mod cgi_audit;
 pub mod common;
+pub mod cramfs;
 pub mod domain_audit;
 pub mod fdt;
 pub mod inspect;
@@ -28,6 +29,7 @@ pub fn dispatch(cli: Cli) -> Result<()> {
         Commands::Carve(args) => carve::handle_carve(args),
         Commands::Audit(args) => audit::handle_audit(args),
         Commands::Squashfs(args) => squashfs::handle_squashfs(args),
+        Commands::Cramfs(args) => cramfs::handle_cramfs(args),
         Commands::Jffs2(args) => jffs2::handle_jffs2(args),
         Commands::Ubifs(args) => ubifs::handle_ubifs(args),
         Commands::Fdt(args) => fdt::handle_fdt(args),

@@ -7,6 +7,7 @@ pub mod carve;
 pub mod cert_audit;
 pub mod cgi_audit;
 pub mod cli;
+pub mod cramfs;
 pub mod domain_audit;
 pub mod error;
 pub mod fdt;
@@ -35,6 +36,12 @@ pub use cert_audit::{
 pub use cgi_audit::{
     audit_web_path, format_cgi_report, CgiAuditConfig, CgiAuditReport, CgiFinding, CgiRuleEngine,
     CgiScanner, CgiSeverity, CgiSynth, CgiVulnCategory,
+};
+pub use cramfs::{
+    build_synthetic_cramfs, probe_cramfs_at, scan_cramfs_partitions, walk_directory_tree,
+    CramFsArchive, CramFsAuditFinding, CramFsAuditReport, CramFsEntry, CramFsFileType,
+    CramFsPartitionSpan, CramFsRuleEngine, CramFsSeverity, CramFsSummary, CramFsSuperblock,
+    CRAMFS_MAGIC_BE, CRAMFS_MAGIC_LE,
 };
 pub use domain_audit::{
     audit_domain_buffer, audit_domain_path, format_domain_report, DomainAuditConfig,

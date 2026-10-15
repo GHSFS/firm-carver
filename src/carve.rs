@@ -111,47 +111,25 @@ fn parse_squashfs_at(data: &[u8], offset: usize) -> Option<CarvedSegment> {
 }
 
 fn parse_cramfs_at(data: &[u8], offset: usize) -> Option<CarvedSegment> {
-    if data.len() < offset + 64 {
-        return None;
-    }
-    let slice = &data[offset..offset + 64];
-    let magic_le = u32::from_le_bytes(slice[0..4].try_into().ok()?);
-    let magic_be = u32::from_be_bytes(slice[0..4].try_into().ok()?);
-
-    let (is_le, size, flags) = if magic_le == CRAMFS_MAGIC_LE {
-        let size = u32::from_le_bytes(slice[4..8].try_into().ok()?);
-        let flags = u32::from_le_bytes(slice[8..12].try_into().ok()?);
-        (true, size, flags)
-    } else if magic_be == CRAMFS_MAGIC_BE {
-        let size = u32::from_be_bytes(slice[4..8].try_into().ok()?);
-        let flags = u32::from_be_bytes(slice[8..12].try_into().ok()?);
-        (false, size, flags)
-    } else {
-        return None;
-    };
-
-    let calculated_len = if size > 0 && size as usize <= (data.len() - offset) {
-        size as usize
-    } else {
-        data.len() - offset
-    };
+    let span = crate::cramfs::probe_cramfs_at(data, offset)?;
 
     Some(CarvedSegment {
         kind: CarvedKind::CramFs,
         offset,
-        length: calculated_len,
+        length: span.length,
         description: format!(
-            "CramFS compressed ROM filesystem (size: {} bytes, flags: 0x{:08X})",
-            size, flags
+            "CramFS compressed ROM filesystem (name: '{}', size: {} bytes, {} entries)",
+            span.fs_name, span.size_field, span.recovered_entries
         ),
-        endianness: if is_le {
-            "little-endian".to_string()
-        } else {
-            "big-endian".to_string()
+        endianness: match span.endianness {
+            crate::cramfs::Endianness::Little => "little-endian".to_string(),
+            crate::cramfs::Endianness::Big => "big-endian".to_string(),
         },
         attributes: serde_json::json!({
-            "size": size,
-            "flags": flags,
+            "name": span.fs_name,
+            "size": span.size_field,
+            "flags": span.flags,
+            "recovered_entries": span.recovered_entries,
         }),
         extracted_filename: None,
     })

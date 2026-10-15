@@ -62,6 +62,13 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
         }
         "cert-blob" => CertSynth::build_synthetic_firmware_cert_blob(),
         "squashfs" => build_synthetic_squashfs(false),
+        "cramfs" => firm_carver::cramfs::build_synthetic_cramfs(
+            firm_carver::cramfs::Endianness::Little,
+            true,
+        ),
+        "cramfs-be" => {
+            firm_carver::cramfs::build_synthetic_cramfs(firm_carver::cramfs::Endianness::Big, true)
+        }
         "fdt" | "dtb" => build_synthetic_fdt(),
         "multi-stage" | "sliced" | "stages" => build_synthetic_sliced_firmware(),
         "integrity" | "attested" | "attestation" => {

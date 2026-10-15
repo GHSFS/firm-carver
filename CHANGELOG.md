@@ -2,6 +2,47 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.13.0] - 2026-10-15
+
+### Added
+- **CramFS Deep Directory Walker & Symlink Auditor (`src/cramfs/`)**:
+  - Implemented standalone zero-dependency CramFS superblock and inode parser (`superblock.rs`, `types.rs`) supporting both Little-Endian (`[0x45, 0x3d, 0xcd, 0x28]`) and Big-Endian (`[0x28, 0xcd, 0x3d, 0x45]`) on-disk magic layouts (`CRAMFS_MAGIC = 0x28cd_3d45`).
+  - Implemented bitfield unpacking for CramFS 12-byte packed inodes:
+    - Word 0: file mode (16-bit UNIX permission and file type flags) and UID (16-bit).
+    - Word 1: uncompressed file size (24-bit, up to 16 MiB) and GID (8-bit).
+    - Word 2: namelen (6-bit, word-aligned length) and payload offset (26-bit, byte offset shifted right by 2).
+  - Implemented block-pointer array parser and Zlib decompression engine (`decompress.rs`):
+    - Block pointer array parsing with per-block compressed length determination.
+    - Transparent Zlib decompression using pure-Rust `flate2` (`miniz_oxide` backend) with a 32 MiB uncompressed file safety ceiling preventing decompression bomb attacks.
+    - Inline symlink target extraction and direct ASCII string resolution.
+  - Implemented recursive directory tree reconstruction engine (`reconstruct.rs`):
+    - Recursive traversal recovering complete directory hierarchies, file sizes, UNIX permissions (`drwxr-xr-x`, `lrwxrwxrwx`, `-rwsr-xr-x`), and symlink target strings.
+    - Directory recursion loop and cycle detection with a maximum traversal depth limit of 32.
+    - Symlink path traversal auditing resolving relative path components (`../`) against the root archive boundaries.
+    - Dangling symlink detection auditing targets that do not exist within the archive.
+    - Safe disk extraction (`extract_to_disk`) enforcing canonical path containment via `validate_safe_path` to prevent arbitrary file writes.
+  - Implemented comprehensive CramFS security auditing rule engine (`rules.rs`):
+    - **`CRAMFS-TRAV-001` (Critical)**: Path traversal symlink escaping the archive root (e.g., `../../etc/shadow`).
+    - **`CRAMFS-SYMLNK-001` (Low)**: Dangling symlink pointing to a non-existent path within the archive.
+    - **`CRAMFS-SYMLNK-002` (High)**: Symlink pointing to sensitive system paths (`/dev/`, `/proc/`, `/sys/`, `/etc/`).
+    - **`CRAMFS-PERM-001` (High)**: Setuid or Setgid binary discovered in the filesystem image.
+    - **`CRAMFS-DEV-001` (Medium)**: Block or character device node residing outside the standard `/dev/` directory.
+    - **`CRAMFS-INTEG-001` (Medium)**: Corrupted, non-Zlib, or unreadable block payload detected during extraction.
+  - Implemented continuous raw firmware partition carver (`carver.rs`):
+    - `probe_cramfs_at` and `scan_cramfs_partitions` identifying CramFS filesystem partitions in unaligned binary streams, bound to `CarvedKind::CramFs`.
+  - Implemented deterministic synthetic fixture generator (`synth.rs`):
+    - `build_synthetic_cramfs` producing valid Little-Endian and Big-Endian CramFS images with non-overlapping superblock (0..512), root directory table (512..1024), and payload data blocks (1024+).
+    - Integrated with `fcarver synth-fw -t cramfs` and `fcarver synth-fw -t cramfs-be`.
+- **Dedicated CLI Subcommand `cramfs` (`src/cli.rs`, `src/commands/cramfs.rs`)**:
+  - `fcarver cramfs <target>`: parses and displays CramFS superblock metadata and entry summaries.
+  - `fcarver cramfs <target> --list`: renders complete UNIX-style directory listings (`ls -la` format).
+  - `fcarver cramfs <target> --audit`: executes security auditing rules and displays a severity-ranked findings table.
+  - `fcarver cramfs <target> --extract <dir>`: safely extracts all files and directories to disk with path traversal defense.
+  - `fcarver cramfs <target> --offset <bytes>`: parses CramFS image starting from a specified byte offset.
+  - `fcarver cramfs <target> --json`: outputs structured JSON archive details and audit reports to stdout.
+- **Dedicated Integration Test Suite (`tests/cramfs_walk_test.rs`)**:
+  - 12 comprehensive integration tests covering Little-Endian/Big-Endian superblock parsing, Zlib decompression, symlink resolution, traversal detection, dangling link detection, SUID binary audit, safe disk extraction, raw firmware stream carving, corrupted input resilience, and JSON formatting.
+
 ## [0.12.0] - 2026-10-14
 
 ### Added

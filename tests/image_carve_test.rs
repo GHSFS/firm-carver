@@ -117,3 +117,23 @@ fn test_squashfs_and_gzip_stream_carving() {
     // Clean up temp directory
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_cramfs_stream_carving() {
+    let img =
+        firm_carver::cramfs::build_synthetic_cramfs(firm_carver::cramfs::Endianness::Little, false);
+    let mut blob = vec![0xAA; 512];
+    let cramfs_offset = blob.len();
+    blob.extend_from_slice(&img);
+    blob.extend_from_slice(&vec![0xBB; 256]);
+
+    let segments = scan_carvable_streams(&blob);
+    let cramfs_seg = segments
+        .iter()
+        .find(|s| s.kind == CarvedKind::CramFs)
+        .expect("Missing carved CramFS segment");
+
+    assert_eq!(cramfs_seg.offset, cramfs_offset);
+    assert_eq!(cramfs_seg.length, img.len());
+    assert_eq!(cramfs_seg.endianness, "little-endian");
+}

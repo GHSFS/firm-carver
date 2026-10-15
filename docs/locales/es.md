@@ -42,6 +42,7 @@ firm-carver (fcarver) es una herramienta CLI y biblioteca en Rust puro para el a
 8. **Hardcoded TLS Certificate & Expired Root CA Scanner (`src/cert_audit/`)** — Zero-dependency pure-Rust ASN.1 DER parser and RFC 4648 Base64 PEM decoder for X.509 certificates and PKCS#1/PKCS#8 private keys, checking expiration, weak signatures (MD5/SHA1), weak RSA keys (<2048), self-signed certs, and paired private keys.
 9. **JFFS2 Flash Filesystem Carver & Node Reconstructor (`src/jffs2/`)** — Pure-Rust JFFS2 flash filesystem parser and carver for NOR/NAND partitions supporting Little-Endian (`0x85 0x19`) and Big-Endian (`0x19 0x85`), RTIME and Zlib decompression with bounds-checked CVE-2024-57850 hardening, tombstone resolution, and filesystem extraction.
 10. **UBI & UBIFS Volume Header Parser & Filesystem Reconstructor (`src/ubifs/`)** — Zero-dependency pure-Rust UBI physical erase block (PEB) parser, VID header decoder, layout volume table reader, and UBIFS superblock, master node, and directory tree extractor for NAND router flash dumps.
+11. **CramFS Deep Directory Walker & Symlink Auditor (`src/cramfs/`)** — Standalone CramFS compressed ROM filesystem reader and security auditor supporting Little-Endian and Big-Endian images, block pointer decompression with zlib, path traversal detection, dangling symlink auditing, and directory extraction.
 
 </details>
 
@@ -95,7 +96,13 @@ cargo build --release
 ./target/release/fcarver squashfs sample_uboot.bin --list
 ./target/release/fcarver squashfs sample_uboot.bin --json
 
-# 6. Disassemble Device Tree Blob (FDT) into DTS or map hardware peripherals
+# 6. Walk CramFS directory trees, resolve symlinks, and run security posture audits
+./target/release/fcarver cramfs sample_cramfs.bin --list
+./target/release/fcarver cramfs sample_cramfs.bin --audit
+./target/release/fcarver cramfs sample_cramfs.bin --extract ./extracted_cramfs
+./target/release/fcarver cramfs sample_cramfs.bin --json
+
+# 7. Disassemble Device Tree Blob (FDT) into DTS or map hardware peripherals
 ./target/release/fcarver fdt sample_uboot.bin --dts
 ./target/release/fcarver fdt sample_uboot.bin --hardware
 ./target/release/fcarver fdt sample_uboot.bin --json
@@ -167,6 +174,7 @@ cargo build --release
 | `inspect` | `<file> [--json]` | Identifies container headers: U-Boot, TRX, FDT, architecture, offsets |
 | `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, JFFS2, UBI, Gzip, LZMA partitions to disk |
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
+| `cramfs` | `<file> [--list] [--audit] [--extract <dir>] [--json] [--offset <bytes>]` | Traverses CramFS directory hierarchy, resolves symlinks, and audits traversal flaws |
 | `jffs2` | `<file> [--list] [--extract <dir>] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from JFFS2 flash |
 | `ubifs` | `<file> [--list] [--extract <dir>] [--peb-size <bytes>] [--json] [--offset <bytes>]` | Parses UBI volume headers, LEB mappings, and extracts UBIFS directory trees |
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
@@ -178,7 +186,7 @@ cargo build --release
 | `nvram` | `<file> [--list] [--audit] [--extract <file.env>] [--format <auto|bcm|mtk>] [--json]` | Extracts, carves, and audits Broadcom and MediaTek NVRAM configuration tables |
 | `domain-audit` | `<target> [--min-severity <level>] [--filter <kind>] [--no-private] [--out <file.json>] [--json]` | Extracts and audits URLs, IPv4/IPv6 endpoints, and telemetry domains |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|nvram-bcm|nvram-mtk|nvram-dat|domain-vuln|domain-hardened|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|cramfs|cramfs-be|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|nvram-bcm|nvram-mtk|nvram-dat|domain-vuln|domain-hardened|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
 
 </details>
 

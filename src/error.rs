@@ -37,6 +37,8 @@ pub enum CarverError {
     Nvram(String),
     /// Hardcoded network endpoint and telemetry domain auditing error
     DomainAudit(String),
+    /// CramFS compressed filesystem parsing, directory walking, or symlink auditing error
+    CramFs(String),
 }
 
 impl fmt::Display for CarverError {
@@ -57,6 +59,7 @@ impl fmt::Display for CarverError {
             Self::Ubifs(msg) => write!(f, "UBI/UBIFS error: {}", msg),
             Self::Nvram(msg) => write!(f, "NVRAM error: {}", msg),
             Self::DomainAudit(msg) => write!(f, "Domain audit error: {}", msg),
+            Self::CramFs(msg) => write!(f, "CramFS error: {}", msg),
         }
     }
 }
