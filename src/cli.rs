@@ -29,6 +29,8 @@ pub enum Commands {
     Squashfs(SquashfsArgs),
     /// Parse, walk directory trees, resolve symlinks, and audit CramFS compressed filesystems
     Cramfs(CramfsArgs),
+    /// Parse and audit Ext2/Ext3/Ext4 filesystems, superblock descriptors, and inode trees
+    Extfs(ExtfsArgs),
     /// Carve, parse, and reconstruct JFFS2 flash filesystem directory trees and nodes
     Jffs2(Jffs2Args),
     /// Parse UBI volume headers, LEB mappings, and extract UBIFS directory trees and nodes
@@ -117,6 +119,27 @@ pub struct CramfsArgs {
     /// List detailed file tree with permissions, sizes, and symlink targets
     #[arg(short, long)]
     pub list: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct ExtfsArgs {
+    /// Path to firmware binary or extracted Ext2/3/4 filesystem image
+    pub file: PathBuf,
+    /// Byte offset where Ext2/3/4 filesystem begins (default: auto-scan or 0)
+    #[arg(short, long)]
+    pub offset: Option<usize>,
+    /// Destination directory to safely extract recovered files and directories
+    #[arg(short, long)]
+    pub extract: Option<PathBuf>,
+    /// Run security posture audit on extracted Ext2/3/4 image (symlinks, permissions, device nodes)
+    #[arg(short, long)]
+    pub audit: bool,
+    /// List detailed file tree with permissions, sizes, inodes, and symlink targets
+    #[arg(short, long)]
+    pub list: bool,
+    /// Output results in structured JSON format
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]
@@ -327,7 +350,7 @@ pub struct DomainAuditArgs {
 pub struct SynthFwArgs {
     /// Path to write synthetic firmware blob or directory
     pub output: PathBuf,
-    /// Container or code type: uboot, trx, fdt, squashfs, cramfs, cramfs-be, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat, domain-vuln, domain-hardened (default: uboot)
+    /// Container or code type: uboot, trx, fdt, squashfs, cramfs, cramfs-be, ext2, ext2-be, ext4, multi-stage, shellcode-mips, shellcode-arm, shellcode-aarch64, shellcode-riscv, integrity, cgi-tree, vuln-cgi, cert-store, cert-blob, nvram-bcm, nvram-mtk, nvram-dat, domain-vuln, domain-hardened (default: uboot)
     #[arg(short = 't', long = "type", default_value = "uboot")]
     pub fw_type: String,
 }

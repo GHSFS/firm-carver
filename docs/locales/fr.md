@@ -102,6 +102,12 @@ cargo build --release
 ./target/release/fcarver cramfs sample_cramfs.bin --extract ./extracted_cramfs
 ./target/release/fcarver cramfs sample_cramfs.bin --json
 
+# 7. Parse Ext2/Ext3/Ext4 filesystems, inspect superblock descriptors, and audit inode trees
+./target/release/fcarver extfs sample_ext.bin --list
+./target/release/fcarver extfs sample_ext.bin --audit
+./target/release/fcarver extfs sample_ext.bin --extract ./extracted_extfs
+./target/release/fcarver extfs sample_ext.bin --json
+
 # 7. Disassemble Device Tree Blob (FDT) into DTS or map hardware peripherals
 ./target/release/fcarver fdt sample_uboot.bin --dts
 ./target/release/fcarver fdt sample_uboot.bin --hardware
@@ -175,6 +181,7 @@ cargo build --release
 | `carve` | `<file> --out <dir> [--json]` | Carves embedded SquashFS, CramFS, JFFS2, UBI, Gzip, LZMA partitions to disk |
 | `squashfs` | `<file> [--list] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from SquashFS v4 |
 | `cramfs` | `<file> [--list] [--audit] [--extract <dir>] [--json] [--offset <bytes>]` | Traverses CramFS directory hierarchy, resolves symlinks, and audits traversal flaws |
+| `extfs` | `<file> [--list] [--audit] [--extract <dir>] [--json] [--offset <bytes>]` | Parses Ext2/Ext3/Ext4 superblocks, extent trees, and audits symlinks and permissions |
 | `jffs2` | `<file> [--list] [--extract <dir>] [--json] [--offset <bytes>]` | Extracts directory tree, inode metadata, and symlinks from JFFS2 flash |
 | `ubifs` | `<file> [--list] [--extract <dir>] [--peb-size <bytes>] [--json] [--offset <bytes>]` | Parses UBI volume headers, LEB mappings, and extracts UBIFS directory trees |
 | `fdt` | `<file> [--dts] [--hardware] [--json] [--offset <bytes>]` | Disassembles Device Tree (FDT) into DTS and maps peripheral hardware |
@@ -186,7 +193,7 @@ cargo build --release
 | `nvram` | `<file> [--list] [--audit] [--extract <file.env>] [--format <auto|bcm|mtk>] [--json]` | Extracts, carves, and audits Broadcom and MediaTek NVRAM configuration tables |
 | `domain-audit` | `<target> [--min-severity <level>] [--filter <kind>] [--no-private] [--out <file.json>] [--json]` | Extracts and audits URLs, IPv4/IPv6 endpoints, and telemetry domains |
 | `audit` | `<file> [--json]` | Scans for hardcoded credentials, private keys, backdoor commands |
-| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|cramfs|cramfs-be|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|nvram-bcm|nvram-mtk|nvram-dat|domain-vuln|domain-hardened|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
+| `synth-fw` | `<output> [--type <uboot|trx|fdt|squashfs|cramfs|cramfs-be|ext2|ext2-be|ext4|jffs2|jffs2-be|ubi|ubi-be|ubifs|ubifs-be|cert-store|cert-blob|nvram-bcm|nvram-mtk|nvram-dat|domain-vuln|domain-hardened|multi-stage|shellcode-mips|shellcode-arm|shellcode-aarch64|shellcode-riscv|integrity|cgi-tree|vuln-cgi>]` | Generates a valid synthetic firmware blob or web tree for testing |
 
 </details>
 

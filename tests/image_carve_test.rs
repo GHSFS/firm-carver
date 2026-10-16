@@ -137,3 +137,26 @@ fn test_cramfs_stream_carving() {
     assert_eq!(cramfs_seg.length, img.len());
     assert_eq!(cramfs_seg.endianness, "little-endian");
 }
+
+#[test]
+fn test_extfs_stream_carving() {
+    let img = firm_carver::extfs::build_synthetic_extfs(
+        false,
+        firm_carver::extfs::Endianness::Little,
+        false,
+    );
+    let mut blob = vec![0x11; 1024];
+    let extfs_offset = blob.len();
+    blob.extend_from_slice(&img);
+    blob.extend_from_slice(&vec![0x22; 512]);
+
+    let segments = scan_carvable_streams(&blob);
+    let extfs_seg = segments
+        .iter()
+        .find(|s| s.kind == CarvedKind::ExtFs)
+        .expect("Missing carved ExtFS segment");
+
+    assert_eq!(extfs_seg.offset, extfs_offset);
+    assert_eq!(extfs_seg.length, img.len());
+    assert_eq!(extfs_seg.endianness, "little-endian");
+}

@@ -2,6 +2,36 @@
 
 All notable changes to `firm-carver` (`fcarver`) are documented in this file.
 
+## [0.14.0] - 2026-10-16
+
+### Added
+- **Ext2/Ext3/Ext4 Raw Superblock & Block Group Inode Walker (`src/extfs/`)**:
+  - Implemented standalone zero-dependency Ext2, Ext3, and Ext4 superblock parser (`superblock.rs`, `types.rs`) supporting Little-Endian (`[0x53, 0xEF]`) and Big-Endian (`[0xEF, 0x53]`) layouts (`EXT_SUPER_MAGIC = 0xEF53`).
+  - Implemented 32-bit and 64-bit Block Group Descriptor Table (GDT) parser with flexible block geometry calculation.
+  - Implemented Inode parsing engine supporting both Ext2/Ext3 direct/indirect block pointers and Ext4 Extent trees (`0xF30A` header with leaf/index traversal).
+  - Implemented fast inline symbolic link decoder for short symlinks stored directly in the `i_block` array (`size <= 60`).
+  - Implemented recursive directory tree reconstruction engine (`reconstruct.rs`) supporting linked directory records (`ext4_dir_entry_2`), cycle detection (depth limit 32), UNIX permissions formatting, and path traversal-safe disk extraction (`extract_to_disk`, `validate_safe_path`).
+  - Implemented comprehensive security auditing rules (`rules.rs`):
+    - **`EXTFS-TRAV-001` (Critical)**: Path traversal symlinks escaping the archive root (e.g., `../../etc/shadow`).
+    - **`EXTFS-SYMLNK-001` (Low)**: Dangling symlinks pointing to non-existent internal filesystem targets.
+    - **`EXTFS-SYMLNK-002` (High)**: Symlinks pointing to sensitive hardware nodes or virtual filesystems (`/dev/`, `/proc/`, `/sys/`).
+    - **`EXTFS-PERM-001` (High)**: Setuid and Setgid executables discovered in the filesystem image.
+    - **`EXTFS-DEV-001` (Medium)**: Block or character device nodes placed in non-standard user directories outside `/dev/`.
+    - **`EXTFS-INTEG-001` (Medium)**: Corrupt or inconsistent superblock geometry.
+    - **`EXTFS-SHADOW-001` (Critical)**: Unprotected shadow password databases containing hash material.
+  - Implemented continuous partition stream carver (`carver.rs`) registering `CarvedKind::ExtFs` into `src/carve.rs`.
+  - Implemented deterministic synthetic builders (`synth.rs`) supporting Ext2 and Ext4 Little-Endian and Big-Endian test images, integrated with `fcarver synth-fw -t ext2`, `ext2-be`, `ext4`.
+- **Dedicated CLI Subcommand `extfs` (`src/cli.rs`, `src/commands/extfs.rs`)**:
+  - `fcarver extfs <image>`: inspects superblock geometry, feature flags, volume label, UUID, and summary.
+  - `fcarver extfs <image> --list`: outputs full UNIX `ls -la` directory listing.
+  - `fcarver extfs <image> --audit`: runs security audit rules and outputs findings table.
+  - `fcarver extfs <image> --extract <dir>`: safely extracts all files and directories to disk.
+  - `fcarver extfs <image> --offset <bytes>`: parses ExtFS starting from a specified byte offset.
+  - `fcarver extfs <image> --json`: outputs structured JSON archive metadata and audit reports.
+- **Dedicated Integration Test Suite (`tests/extfs_test.rs`)**:
+  - 10 integration tests covering LE/BE Ext2, Ext4 extent trees, fast inline symlinks, security audit rules, safe disk extraction, raw firmware stream carving, corrupted input resilience, and JSON serialization.
+  - Added `test_extfs_stream_carving` in `tests/image_carve_test.rs`.
+
 ## [0.13.0] - 2026-10-15
 
 ### Added

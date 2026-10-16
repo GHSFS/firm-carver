@@ -10,6 +10,7 @@ pub mod cli;
 pub mod cramfs;
 pub mod domain_audit;
 pub mod error;
+pub mod extfs;
 pub mod fdt;
 pub mod image;
 pub mod integrity;
@@ -50,6 +51,14 @@ pub use domain_audit::{
     IpScope, UrlScheme,
 };
 pub use error::{CarverError, Result};
+pub use extfs::{
+    build_synthetic_extfs, extract_archive_to_disk as extract_ext_archive_to_disk,
+    format_mode_string as format_ext_mode_string, parse_extfs_segment_at, probe_extfs_at,
+    scan_extfs_partitions, BlockGroupDescriptor, Endianness as ExtEndianness, ExtArchive,
+    ExtAuditFinding, ExtAuditReport, ExtEntry, ExtFileType, ExtInode, ExtPartitionSpan,
+    ExtRuleEngine, ExtSeverity, ExtSummary, ExtSuperblock, ExtVersion, EXT_SUPERBLOCK_OFFSET,
+    EXT_SUPER_MAGIC,
+};
 pub use fdt::{
     build_synthetic_fdt, CpuCore, FdtArchive, FdtHeader, FdtNode, FdtProperty, FdtReserveEntry,
     FlashPartition, MemoryRange, NetworkInterface, PeripheralMap, UartConsole, FDT_MAGIC,

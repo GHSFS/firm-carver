@@ -39,6 +39,8 @@ pub enum CarverError {
     DomainAudit(String),
     /// CramFS compressed filesystem parsing, directory walking, or symlink auditing error
     CramFs(String),
+    /// Ext2/Ext3/Ext4 filesystem parsing, directory walking, or inode auditing error
+    ExtFs(String),
 }
 
 impl fmt::Display for CarverError {
@@ -60,6 +62,7 @@ impl fmt::Display for CarverError {
             Self::Nvram(msg) => write!(f, "NVRAM error: {}", msg),
             Self::DomainAudit(msg) => write!(f, "Domain audit error: {}", msg),
             Self::CramFs(msg) => write!(f, "CramFS error: {}", msg),
+            Self::ExtFs(msg) => write!(f, "ExtFS error: {}", msg),
         }
     }
 }

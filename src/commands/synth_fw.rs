@@ -69,6 +69,21 @@ pub fn handle_synth_fw(args: SynthFwArgs) -> Result<()> {
         "cramfs-be" => {
             firm_carver::cramfs::build_synthetic_cramfs(firm_carver::cramfs::Endianness::Big, true)
         }
+        "ext2" => firm_carver::extfs::build_synthetic_extfs(
+            false,
+            firm_carver::extfs::Endianness::Little,
+            true,
+        ),
+        "ext2-be" => firm_carver::extfs::build_synthetic_extfs(
+            false,
+            firm_carver::extfs::Endianness::Big,
+            true,
+        ),
+        "ext4" => firm_carver::extfs::build_synthetic_extfs(
+            true,
+            firm_carver::extfs::Endianness::Little,
+            true,
+        ),
         "fdt" | "dtb" => build_synthetic_fdt(),
         "multi-stage" | "sliced" | "stages" => build_synthetic_sliced_firmware(),
         "integrity" | "attested" | "attestation" => {

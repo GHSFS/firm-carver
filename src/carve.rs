@@ -24,6 +24,7 @@ pub enum CarvedKind {
     Ubi,
     Ubifs,
     Nvram,
+    ExtFs,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -256,6 +257,12 @@ pub fn scan_carvable_streams(data: &[u8]) -> Vec<CarvedSegment> {
             i += next_offset;
             continue;
         }
+        if let Some(ext) = crate::extfs::parse_extfs_segment_at(data, i) {
+            let next_offset = ext.length.max(1024);
+            segments.push(ext);
+            i += next_offset;
+            continue;
+        }
         if let Some(xz) = parse_xz_at(data, i) {
             segments.push(xz);
             i += 12;
@@ -295,6 +302,7 @@ pub fn carve_and_extract(data: &[u8], out_dir: &Path, source_file: &str) -> Resu
             CarvedKind::Ubi => "ubi",
             CarvedKind::Ubifs => "ubifs",
             CarvedKind::Nvram => "nvram",
+            CarvedKind::ExtFs => "extfs",
         };
         let file_name = format!("carved_{:08x}_{}.{}", seg.offset, idx, ext);
         let dest_path = out_dir.join(&file_name);
